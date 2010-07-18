@@ -131,6 +131,8 @@ WIN_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
 
 #endif
+    if (IME_HandleMessage(hwnd, msg, wParam, &lParam, data->videodata))
+        return 0;
 
     switch (msg) {
 
@@ -555,7 +557,7 @@ SDL_RegisterApp(char *name, Uint32 style, void *hInst)
     class.hbrBackground = NULL;
     class.hInstance = SDL_Instance;
     class.style = SDL_Appstyle;
-    class.lpfnWndProc = DefWindowProc;
+    class.lpfnWndProc = WIN_WindowProc;
     class.cbWndExtra = 0;
     class.cbClsExtra = 0;
     if (!RegisterClass(&class)) {
