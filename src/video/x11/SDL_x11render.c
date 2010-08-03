@@ -1021,8 +1021,9 @@ X11_CreateTexture(SDL_Renderer * renderer, SDL_Texture * texture)
             return -1;
         }
         texture->blendMode = SDL_BLENDMODE_NONE;
+        texture->scaleMode = SDL_TEXTURESCALEMODE_NONE;
         data->blend_op = PictOpSrc;
-        data->filter = "fast";
+        data->filter = NULL;
     }
 #endif
     return 0;
@@ -1159,6 +1160,11 @@ X11_SetTextureScaleMode(SDL_Renderer * renderer, SDL_Texture * texture)
 
     switch (texture->scaleMode) {
     case SDL_TEXTURESCALEMODE_NONE:
+#ifdef SDL_VIDEO_DRIVER_X11_XRENDER
+        if (renderdata->use_xrender) {
+            data->filter = NULL;
+        }
+#endif
         return 0;
     case SDL_TEXTURESCALEMODE_FAST:
         /* We can sort of fake it for streaming textures */
@@ -1186,8 +1192,8 @@ X11_SetTextureScaleMode(SDL_Renderer * renderer, SDL_Texture * texture)
         SDL_Unsupported();
 #ifdef SDL_VIDEO_DRIVER_X11_XRENDER
         if (renderdata->use_xrender) {
-            texture->scaleMode = SDL_TEXTURESCALEMODE_FAST;
-            data->filter = FilterFast;
+            texture->scaleMode = SDL_TEXTURESCALEMODE_NONE;
+            data->filter = NULL;
         }
         else
 #endif
@@ -1880,6 +1886,8 @@ X11_RenderCopy(SDL_Renderer * renderer, SDL_Texture * texture,
         Picture src, mask;
         XRenderPictureAttributes attr;
         const SDL_Rect *mrect;
+        /* mrect is the rectangular area of the mask
+         * picture that is aligned with the source. */
 
         if (texture->modMode == SDL_TEXTUREMODULATE_NONE) {
             src = texturedata->picture;
@@ -1895,12 +1903,17 @@ X11_RenderCopy(SDL_Renderer * renderer, SDL_Texture * texture,
         }
         else if (texture->blendMode == SDL_BLENDMODE_MOD)
         {
+            /* SDL_BLENDMODE_MOD requires a temporary buffer
+             * i.e. stencil_pict */
             mask = data->stencil_pict;
             mrect = dstrect;
         }
         else
         {
-            mask = texturedata->picture;
+            /* This trick allows on-the-fly multiplication
+             * of the src color channels with it's alpha
+             * channel. */
+            mask = src;
             mrect = srcrect;
         }
 
@@ -1919,38 +1932,48 @@ X11_RenderCopy(SDL_Renderer * renderer, SDL_Texture * texture,
                             mrect->x, mrect->y, dstrect->x, dstrect->y,
                             dstrect->w, dstrect->h);
         } else {
-            double xscale = ((double) dstrect->w) / srcrect->w;
-            double yscale = ((double) dstrect->h) / srcrect->h;
+            /* The transformation is from the dst to src picture. */
+            double xscale = ((double) srcrect->w) / dstrect->w;
+            double yscale = ((double) srcrect->h) / dstrect->h;
             XTransform xform = {{
                     {XDoubleToFixed(xscale), XDoubleToFixed(0), XDoubleToFixed(0)},
                     {XDoubleToFixed(0), XDoubleToFixed(yscale), XDoubleToFixed(0)},
                     {XDoubleToFixed(0), XDoubleToFixed(0), XDoubleToFixed(xscale * yscale)}}};
             XRenderSetPictureTransform(data->display, src, &xform);
             
+            /* Black magic follows. */
             if (texture->blendMode == SDL_BLENDMODE_MOD) {
+                /* Copy the dst to a temp buffer. */
                 XRenderComposite(data->display, PictOpSrc, data->drawable_pict,
                              src, data->stencil_pict,
                              dstrect->x, dstrect->y, srcrect->x, srcrect->y,
                              dstrect->x, dstrect->y, dstrect->w, dstrect->h);
+                /* Set the compnent alpha flag on the temp buffer. */
                 attr.component_alpha = True;
                 XRenderChangePicture(data->display, data->stencil_pict,
                                      CPComponentAlpha, &attr);
             }
 
-            XRenderSetPictureFilter(data->display, src,
-                                    texturedata->filter, 0, 0);
+            /* Set the picture filter only if a scaling mode is set. */
+            if (texture->scaleMode != SDL_TEXTURESCALEMODE_NONE) {
+                XRenderSetPictureFilter(data->display, src,
+                                        texturedata->filter, 0, 0);
+            }
 
             XRenderComposite(data->display, texturedata->blend_op,
                              src, mask, data->drawable_pict,
                              srcrect->x, srcrect->y, mrect->x, mrect->y,
                              dstrect->x, dstrect->y, dstrect->w, dstrect->h);
-            
+           /* Set the texture transformation back to the identity matrix. */ 
             XTransform identity = {{
                     {XDoubleToFixed(1), XDoubleToFixed(0), XDoubleToFixed(0)},
                     {XDoubleToFixed(0), XDoubleToFixed(1), XDoubleToFixed(0)},
                     {XDoubleToFixed(0), XDoubleToFixed(0), XDoubleToFixed(1)}}};
             XRenderSetPictureTransform(data->display, src, &identity);
         }
+        
+        /* Reset the component alpha flag only when
+         * the blending mode is SDL_BLENDMODE_MOD. */
         if (renderer->blendMode == SDL_BLENDMODE_MOD) {
             attr.component_alpha = False;
             XRenderChangePicture(data->display, data->stencil_pict,
