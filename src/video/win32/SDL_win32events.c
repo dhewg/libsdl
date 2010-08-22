@@ -20,9 +20,9 @@
     slouken@libsdl.org
 */
 
-#if (_WIN32_WINNT < 0x0501)
+#if (_WIN32_WINNT < 0x601)
 #undef _WIN32_WINNT
-#define _WIN32_WINNT 0x0501
+#define _WIN32_WINNT 0x601
 #endif
 
 #include "SDL_config.h"
@@ -32,11 +32,14 @@
 #include "SDL_vkeys.h"
 #include "../../events/SDL_events_c.h"
 
-/*#define WMMSG_DEBUG*/
+
+
+#define WMMSG_DEBUG
 #ifdef WMMSG_DEBUG
-#include <stdio.h>
+#include <stdio.h>	
 #include "wmmsg.h"
 #endif
+//#include <stdio.h>
 
 /* Masks for processing the windows KEYDOWN and KEYUP messages */
 #define REPEATED_KEYMASK    (1<<30)
@@ -83,10 +86,14 @@ RemapVKEY(WPARAM wParam, LPARAM lParam)
        except they don't have the extended bit (0x1000000) set.
      */
     if (!(lParam & 0x1000000)) {
-        for (i = 0; i < SDL_arraysize(keypad_scancodes); ++i) {
-            if (scancode == keypad_scancodes[i]) {
-                wParam = VK_NUMPAD0 + i;
-                break;
+        if (wParam == VK_DELETE) {
+            wParam = VK_DECIMAL;
+        } else {
+            for (i = 0; i < SDL_arraysize(keypad_scancodes); ++i) {
+                if (scancode == keypad_scancodes[i]) {
+                    wParam = VK_NUMPAD0 + i;
+                    break;
+                }
             }
         }
     }
@@ -117,9 +124,10 @@ WIN_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     if (!data) {
         return CallWindowProc(DefWindowProc, hwnd, msg, wParam, lParam);
     }
+
 #ifdef WMMSG_DEBUG
-    {
-        FILE *log = fopen("wmmsg.txt", "a");
+    {		
+        FILE *log = fopen("wmmsg.txt", "a");		
         fprintf(log, "Received windows message: %p ", hwnd);
         if (msg > MAX_WMMSG) {
             fprintf(log, "%d", msg);
@@ -182,6 +190,22 @@ WIN_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         break;
 
 	case WM_MOUSEMOVE:
+#ifdef _WIN32_WCE
+	/* transform coords for VGA, WVGA... */
+	{
+	    SDL_VideoData *videodata = data->videodata;
+	    if(videodata->CoordTransform &&
+		(videodata->render == RENDER_GAPI || videodata->render == RENDER_RAW))
+	    {
+		POINT pt;
+		pt.x = LOWORD(lParam);
+		pt.y = HIWORD(lParam);
+		videodata->CoordTransform(data->window, &pt);
+    		SDL_SendMouseMotion(data->window, 0, pt.x, pt.y);
+		break;
+	    }
+	}
+#endif
         SDL_SendMouseMotion(data->window, 0, LOWORD(lParam), HIWORD(lParam));
         break;
 
@@ -203,12 +227,6 @@ WIN_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_SYSKEYDOWN:
     case WM_KEYDOWN:
         {
-            /* Ignore repeated keys */
-            if (lParam & REPEATED_KEYMASK) {
-                returnCode = 0;
-                break;
-            }
-
             wParam = RemapVKEY(wParam, lParam);
             switch (wParam) {
             case VK_CONTROL:
@@ -497,7 +515,39 @@ WIN_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         returnCode = 0;
         break;
-    }
+	case WM_TOUCH:
+		{
+			//printf("Got Touch Event!\n");
+    
+			FILE *log = fopen("wmmsg.txt", "a");
+			fprintf(log, "Received Touch Message: %p ", hwnd);
+			if (msg > MAX_WMMSG) {
+				fprintf(log, "%d", msg);
+			} else {
+				fprintf(log, "%s", wmtab[msg]);
+			}
+			fprintf(log, "WM_TOUCH = %d -- 0x%X, 0x%X\n",msg, wParam, lParam);
+			fclose(log);
+    
+		}
+		break;
+	case WM_GESTURE:
+		{
+			//printf("Got Touch Event!\n");
+    
+			FILE *log = fopen("wmmsg.txt", "a");
+			fprintf(log, "Received Gesture Message: %p ", hwnd);
+			if (msg > MAX_WMMSG) {
+				fprintf(log, "%d", msg);
+			} else {
+				fprintf(log, "%s", wmtab[msg]);
+			}
+			fprintf(log, "WM_GESTURE = %d -- 0x%X, 0x%X\n",msg, wParam, lParam);
+			fclose(log);
+    
+		}
+		break;		
+	}
 
     /* If there's a window proc, assume it's going to handle messages */
     if (data->wndproc) {

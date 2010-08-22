@@ -25,16 +25,42 @@
 #include <sys/time.h>
 #include <signal.h>
 #include <unistd.h>
-#include <limits.h>	/* For INT_MAX */
+#include <limits.h> /* For INT_MAX */
 
 #include "SDL_x11video.h"
 #include "../../events/SDL_events_c.h"
 #include "../../events/SDL_mouse_c.h"
+#include "../../events/SDL_touch_c.h"
 
 #include "SDL_timer.h"
 #include "SDL_syswm.h"
 
-#define DEBUG_XEVENTS
+#include <stdio.h>
+
+#ifdef SDL_INPUT_LINUXEV
+//Touch Input/event* includes
+#include <linux/input.h>
+#include <fcntl.h>
+#endif
+/*#define DEBUG_XEVENTS*/
+
+/* Check to see if this is a repeated key.
+   (idea shamelessly lifted from GII -- thanks guys! :)
+ */
+static SDL_bool X11_KeyRepeat(Display *display, XEvent *event)
+{
+    XEvent peekevent;
+
+    if (XPending(display)) {
+        XPeekEvent(display, &peekevent);
+        if ((peekevent.type == KeyPress) &&
+            (peekevent.xkey.keycode == event->xkey.keycode) &&
+            ((peekevent.xkey.time-event->xkey.time) < 2)) {
+            return SDL_TRUE;
+        }
+    }
+    return SDL_FALSE;
+}
 
 static void
 X11_DispatchEvent(_THIS)
@@ -92,8 +118,8 @@ X11_DispatchEvent(_THIS)
     case EnterNotify:{
 #ifdef DEBUG_XEVENTS
             printf("EnterNotify! (%d,%d,%d)\n", 
-	           xevent.xcrossing.x,
- 	           xevent.xcrossing.y,
+                   xevent.xcrossing.x,
+                   xevent.xcrossing.y,
                    xevent.xcrossing.mode);
             if (xevent.xcrossing.mode == NotifyGrab)
                 printf("Mode: NotifyGrab\n");
@@ -103,20 +129,21 @@ X11_DispatchEvent(_THIS)
             SDL_SetMouseFocus(data->window);
         }
         break;
-
         /* Losing mouse coverage? */
     case LeaveNotify:{
 #ifdef DEBUG_XEVENTS
             printf("LeaveNotify! (%d,%d,%d)\n", 
-	           xevent.xcrossing.x,
- 	           xevent.xcrossing.y,
+                   xevent.xcrossing.x,
+                   xevent.xcrossing.y,
                    xevent.xcrossing.mode);
             if (xevent.xcrossing.mode == NotifyGrab)
                 printf("Mode: NotifyGrab\n");
             if (xevent.xcrossing.mode == NotifyUngrab)
                 printf("Mode: NotifyUngrab\n");
 #endif
-            if (xevent.xcrossing.detail != NotifyInferior) {
+            if (xevent.xcrossing.mode != NotifyGrab &&
+                xevent.xcrossing.mode != NotifyUngrab &&
+                xevent.xcrossing.detail != NotifyInferior) {
                 SDL_SetMouseFocus(NULL);
             }
         }
@@ -174,6 +201,7 @@ X11_DispatchEvent(_THIS)
     case KeyPress:{
             KeyCode keycode = xevent.xkey.keycode;
             KeySym keysym = NoSymbol;
+            SDL_scancode scancode;
             char text[SDL_TEXTINPUTEVENT_TEXT_SIZE];
             Status status = 0;
 
@@ -187,7 +215,7 @@ X11_DispatchEvent(_THIS)
                 XDisplayKeycodes(display, &min_keycode, &max_keycode);
                 keysym = XKeycodeToKeysym(display, keycode, 0);
                 fprintf(stderr,
-                        "The key you just pressed is not recognized by SDL. To help get this fixed, please report this to the SDL mailing list <sdl@libsdl.org> X11 KeyCode %d (%d), X11 KeySym 0x%X (%s).\n",
+                        "The key you just pressed is not recognized by SDL. To help get this fixed, please report this to the SDL mailing list <sdl@libsdl.org> X11 KeyCode %d (%d), X11 KeySym 0x%lX (%s).\n",
                         keycode, keycode - min_keycode, keysym,
                         XKeysymToString(keysym));
             }
@@ -215,6 +243,10 @@ X11_DispatchEvent(_THIS)
 #ifdef DEBUG_XEVENTS
             printf("KeyRelease (X11 keycode = 0x%X)\n", xevent.xkey.keycode);
 #endif
+            if (X11_KeyRepeat(display, &xevent)) {
+                /* We're about to get a repeated key down, ignore the key up */
+                break;
+            }
             SDL_SendKeyboardKey(SDL_RELEASED, videodata->key_layout[keycode]);
         }
         break;
@@ -299,12 +331,12 @@ X11_DispatchEvent(_THIS)
 
             char *name = XGetAtomName(display, xevent.xproperty.atom);
             if (name) {
-                printf("PropertyNotify: %s\n", name);
+                printf("PropertyNotify: %s %s\n", name, (xevent.xproperty.state == PropertyDelete) ? "deleted" : "changed");
                 XFree(name);
             }
 
             status = XGetWindowProperty(display, data->xwindow, xevent.xproperty.atom, 0L, 8192L, False, AnyPropertyType, &real_type, &real_format, &items_read, &items_left, &propdata);
-            if (status == Success) {
+            if (status == Success && items_read > 0) {
                 if (real_type == XA_INTEGER) {
                     int *values = (int *)propdata;
 
@@ -470,6 +502,79 @@ X11_PumpEvents(_THIS)
     while (X11_Pending(data->display)) {
         X11_DispatchEvent(_this);
     }
+
+#ifdef SDL_INPUT_LINUXEV
+    /* Process Touch events - TODO When X gets touch support, use that instead*/
+    int i = 0,rd;
+    char name[256];
+    struct input_event ev[64];
+    int size = sizeof (struct input_event);
+
+    for(i = 0;i < SDL_GetNumTouch();++i) {
+	SDL_Touch* touch = SDL_GetTouchIndex(i);
+	if(!touch) printf("Touch %i/%i DNE\n",i,SDL_GetNumTouch());
+	EventTouchData* data;
+	data = (EventTouchData*)(touch->driverdata);
+	if(data == NULL) {
+	  printf("No driver data\n");
+	  continue;
+	}
+	if(data->eventStream <= 0) 
+	    printf("Error: Couldn't open stream\n");
+	rd = read(data->eventStream, ev, size * 64);
+	//printf("Got %i/%i bytes\n",rd,size);
+	if(rd >= size) {
+	    for (i = 0; i < rd / sizeof(struct input_event); i++) {
+		switch (ev[i].type) {
+		case EV_ABS:
+		    //printf("Got position x: %i!\n",data->x);
+		    switch (ev[i].code) {
+			case ABS_X:
+			    data->x = ev[i].value;
+			    break;
+			case ABS_Y:
+			    data->y = ev[i].value;
+			    break;
+			case ABS_PRESSURE:
+			    data->pressure = ev[i].value;
+			    if(data->pressure < 0) data->pressure = 0;
+			    break;
+			case ABS_MISC:
+			    if(ev[i].value == 0)
+			        data->up = SDL_TRUE;			    
+			    break;
+			}
+		    break;
+		case EV_MSC:
+		    if(ev[i].code == MSC_SERIAL)
+			data->finger = ev[i].value;
+		    break;
+		case EV_SYN:
+		  //printf("Id: %i\n",touch->id); 
+		  if(data->up) {
+		      SDL_SendFingerDown(touch->id,data->finger,
+			  	       SDL_FALSE,data->x,data->y,
+				       data->pressure);		    
+		  }
+		  else if(data->x >= 0 || data->y >= 0)
+		    SDL_SendTouchMotion(touch->id,data->finger, 
+					SDL_FALSE,data->x,data->y,
+					data->pressure);
+		  
+		    //printf("Synched: %i tx: %i, ty: %i\n",
+		    //	   data->finger,data->x,data->y);
+		  data->x = -1;
+		  data->y = -1;
+		  data->pressure = -1;
+		  data->finger = 0;
+		  data->up = SDL_FALSE;
+		    
+		  break;		
+		}
+	    }
+	}
+    }
+#endif
 }
 
 /* This is so wrong it hurts */
