@@ -67,9 +67,6 @@ static VideoBootStrap *bootstrap[] = {
 #if SDL_VIDEO_DRIVER_SVGALIB
     &SVGALIB_bootstrap,
 #endif
-#if SDL_VIDEO_DRIVER_GAPI
-    &GAPI_bootstrap,
-#endif
 #if SDL_VIDEO_DRIVER_WIN32
     &WIN32_bootstrap,
 #endif
@@ -3271,7 +3268,7 @@ SDL_GL_SwapWindow(SDL_Window * window)
 void
 SDL_GL_DeleteContext(SDL_GLContext context)
 {
-    if (!_this || !context) {
+    if (!_this || !_this->gl_data || !context) {
         return;
     }
     _this->GL_MakeCurrent(_this, NULL, NULL);

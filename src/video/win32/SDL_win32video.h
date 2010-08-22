@@ -28,7 +28,9 @@
 
 #define WIN32_LEAN_AND_MEAN
 #define STRICT
+#ifndef UNICODE
 #define UNICODE
+#endif
 #undef WINVER
 //#define WINVER  0x500           /* Need 0x410 for AlphaBlend() and 0x500 for EnumDisplayDevices() */
 #define WINVER 0x601  /* Need 0x600 (_WIN32_WINNT_WIN7) for WM_Touch */
@@ -70,10 +72,17 @@
 #endif
 extern void WIN_SetError(const char *prefix);
 
+enum { RENDER_NONE, RENDER_D3D, RENDER_DDRAW, RENDER_GDI, RENDER_GAPI, RENDER_RAW };
+
+typedef BOOL  (*PFNSHFullScreen)(HWND, DWORD);
+typedef void  (*PFCoordTransform)(SDL_Window*, POINT*);
+
 /* Private display data */
 
 typedef struct SDL_VideoData
 {
+    int render;
+
 #if SDL_VIDEO_RENDER_D3D
     HANDLE d3dDLL;
     IDirect3D9 *d3d;
@@ -81,6 +90,11 @@ typedef struct SDL_VideoData
 #if SDL_VIDEO_RENDER_DDRAW
     HANDLE ddrawDLL;
     IDirectDraw *ddraw;
+#endif
+#ifdef _WIN32_WCE
+    HMODULE hAygShell;
+    PFNSHFullScreen SHFullScreen;
+    PFCoordTransform CoordTransform;
 #endif
 
     DWORD clipboard_count;

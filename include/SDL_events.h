@@ -148,7 +148,7 @@ typedef struct SDL_KeyboardEvent
     Uint32 type;        /**< ::SDL_KEYDOWN or ::SDL_KEYUP */
     Uint32 windowID;    /**< The window with keyboard focus, if any */
     Uint8 state;        /**< ::SDL_PRESSED or ::SDL_RELEASED */
-    Uint8 padding1;
+    Uint8 repeat;       /**< Non-zero if this is a key repeat */
     Uint8 padding2;
     Uint8 padding3;
     SDL_keysym keysym;  /**< The key that was pressed or released */
@@ -475,12 +475,12 @@ typedef enum
  *  the back of the event queue.
  *  
  *  If \c action is ::SDL_PEEKEVENT, up to \c numevents events at the front
- *  of the event queue, matching \c mask, will be returned and will not
- *  be removed from the queue.
+ *  of the event queue, within the specified minimum and maximum type,
+ *  will be returned and will not be removed from the queue.
  *  
  *  If \c action is ::SDL_GETEVENT, up to \c numevents events at the front 
- *  of the event queue, matching \c mask, will be returned and will be
- *  removed from the queue.
+ *  of the event queue, within the specified minimum and maximum type,
+ *  will be returned and will be removed from the queue.
  *  
  *  \return The number of events actually stored, or -1 if there was an error.
  *  

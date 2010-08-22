@@ -633,6 +633,7 @@ SDL_SendKeyboardKey(Uint8 state, SDL_scancode scancode)
     int posted;
     Uint16 modstate;
     Uint32 type;
+    Uint8 repeat;
 
     if (!scancode) {
         return 0;
@@ -732,7 +733,8 @@ SDL_SendKeyboardKey(Uint8 state, SDL_scancode scancode)
     }
 
     /* Drop events that don't change state */
-    if (keyboard->keystate[scancode] == state) {
+    repeat = (state && keyboard->keystate[scancode]);
+    if (keyboard->keystate[scancode] == state && !repeat) {
 #if 0
         printf("Keyboard event didn't change state - dropped!\n");
 #endif
@@ -748,6 +750,7 @@ SDL_SendKeyboardKey(Uint8 state, SDL_scancode scancode)
         SDL_Event event;
         event.key.type = type;
         event.key.state = state;
+        event.key.repeat = repeat;
         event.key.keysym.scancode = scancode;
         event.key.keysym.sym = keyboard->keymap[scancode];
         event.key.keysym.mod = modstate;
@@ -763,6 +766,11 @@ SDL_SendKeyboardText(const char *text)
 {
     SDL_Keyboard *keyboard = &SDL_keyboard;
     int posted;
+
+    /* Don't post text events for unprintable characters */
+    if ((unsigned char)*text < ' ' || *text == 127) {
+        return 0;
+    }
 
     /* Post the event, if desired */
     posted = 0;

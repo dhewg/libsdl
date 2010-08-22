@@ -86,10 +86,14 @@ RemapVKEY(WPARAM wParam, LPARAM lParam)
        except they don't have the extended bit (0x1000000) set.
      */
     if (!(lParam & 0x1000000)) {
-        for (i = 0; i < SDL_arraysize(keypad_scancodes); ++i) {
-            if (scancode == keypad_scancodes[i]) {
-                wParam = VK_NUMPAD0 + i;
-                break;
+        if (wParam == VK_DELETE) {
+            wParam = VK_DECIMAL;
+        } else {
+            for (i = 0; i < SDL_arraysize(keypad_scancodes); ++i) {
+                if (scancode == keypad_scancodes[i]) {
+                    wParam = VK_NUMPAD0 + i;
+                    break;
+                }
             }
         }
     }
@@ -184,6 +188,22 @@ WIN_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         break;
 
 	case WM_MOUSEMOVE:
+#ifdef _WIN32_WCE
+	/* transform coords for VGA, WVGA... */
+	{
+	    SDL_VideoData *videodata = data->videodata;
+	    if(videodata->CoordTransform &&
+		(videodata->render == RENDER_GAPI || videodata->render == RENDER_RAW))
+	    {
+		POINT pt;
+		pt.x = LOWORD(lParam);
+		pt.y = HIWORD(lParam);
+		videodata->CoordTransform(data->window, &pt);
+    		SDL_SendMouseMotion(data->window, 0, pt.x, pt.y);
+		break;
+	    }
+	}
+#endif
         SDL_SendMouseMotion(data->window, 0, LOWORD(lParam), HIWORD(lParam));
         break;
 
@@ -205,12 +225,6 @@ WIN_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_SYSKEYDOWN:
     case WM_KEYDOWN:
         {
-            /* Ignore repeated keys */
-            if (lParam & REPEATED_KEYMASK) {
-                returnCode = 0;
-                break;
-            }
-
             wParam = RemapVKEY(wParam, lParam);
             switch (wParam) {
             case VK_CONTROL:
