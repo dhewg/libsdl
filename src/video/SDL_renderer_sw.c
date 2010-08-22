@@ -26,6 +26,7 @@
 #include "SDL_pixels_c.h"
 #include "SDL_rect_c.h"
 #include "SDL_yuv_sw_c.h"
+#include "SDL_renderer_sw.h"
 
 
 /* SDL surface based renderer implementation */
@@ -794,7 +795,6 @@ SW_RenderCopy(SDL_Renderer * renderer, SDL_Texture * texture,
               const SDL_Rect * srcrect, const SDL_Rect * dstrect)
 {
     SW_RenderData *data = (SW_RenderData *) renderer->driverdata;
-    SDL_Window *window = renderer->window;
     int status;
 
     if (data->renderer->info.flags & SDL_RENDERER_PRESENTCOPY) {

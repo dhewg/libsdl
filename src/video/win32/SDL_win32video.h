@@ -28,10 +28,21 @@
 
 #define WIN32_LEAN_AND_MEAN
 #define STRICT
+#ifndef UNICODE
 #define UNICODE
+#endif
 #undef WINVER
-#define WINVER  0x500           /* Need 0x410 for AlphaBlend() and 0x500 for EnumDisplayDevices() */
+//#define WINVER  0x500           /* Need 0x410 for AlphaBlend() and 0x500 for EnumDisplayDevices() */
+#define WINVER 0x601  /* Need 0x600 (_WIN32_WINNT_WIN7) for WM_Touch */
+#if (_WIN32_WINNT < 0x601)
+#undef _WIN32_WINNT
+#define _WIN32_WINNT 0x601
+#endif
+
+
 #include <windows.h>
+
+#include <msctf.h>
 
 #if SDL_VIDEO_RENDER_D3D
 //#include <d3d9.h>
@@ -45,11 +56,7 @@
 #include "ddraw.h"
 #endif
 
-#include "wactab/wintab.h"
-#define PACKETDATA ( PK_X | PK_Y | PK_BUTTONS | PK_NORMAL_PRESSURE | PK_CURSOR)
-#define PACKETMODE 0
-#include "wactab/pktdef.h"
-
+#include "SDL_win32clipboard.h"
 #include "SDL_win32events.h"
 #include "SDL_win32gamma.h"
 #include "SDL_win32keyboard.h"
@@ -57,6 +64,7 @@
 #include "SDL_win32mouse.h"
 #include "SDL_win32opengl.h"
 #include "SDL_win32window.h"
+#include "SDL_events.h"
 
 #ifdef UNICODE
 #define WIN_StringToUTF8(S) SDL_iconv_string("UTF-8", "UCS-2", (char *)S, (SDL_wcslen(S)+1)*sizeof(WCHAR))
@@ -65,11 +73,50 @@
 #define WIN_StringToUTF8(S) SDL_iconv_string("UTF-8", "ASCII", (char *)S, (SDL_strlen(S)+1))
 #define WIN_UTF8ToString(S) SDL_iconv_string("ASCII", "UTF-8", (char *)S, SDL_strlen(S)+1)
 #endif
+extern void WIN_SetError(const char *prefix);
+
+enum { RENDER_NONE, RENDER_D3D, RENDER_DDRAW, RENDER_GDI, RENDER_GAPI, RENDER_RAW };
+
+typedef BOOL  (*PFNSHFullScreen)(HWND, DWORD);
+typedef void  (*PFCoordTransform)(SDL_Window*, POINT*);
+
+typedef struct  
+{
+    void **lpVtbl;
+    int refcount;
+    void *data;
+} TSFSink;
+
+// Definition from Win98DDK version of IMM.H
+typedef struct tagINPUTCONTEXT2 {
+    HWND                hWnd;                           
+    BOOL                fOpen;                          
+    POINT               ptStatusWndPos;                 
+    POINT               ptSoftKbdPos;                   
+    DWORD               fdwConversion;                  
+    DWORD               fdwSentence;                    
+    union   {                                           
+        LOGFONTA        A;                              
+        LOGFONTW        W;                              
+    } lfFont;                                           
+    COMPOSITIONFORM     cfCompForm;                     
+    CANDIDATEFORM       cfCandForm[4];                  
+    HIMCC               hCompStr;                       
+    HIMCC               hCandInfo;                      
+    HIMCC               hGuideLine;                     
+    HIMCC               hPrivate;                       
+    DWORD               dwNumMsgBuf;                    
+    HIMCC               hMsgBuf;                        
+    DWORD               fdwInit;                        
+    DWORD               dwReserve[3];                   
+} INPUTCONTEXT2, *PINPUTCONTEXT2, NEAR *NPINPUTCONTEXT2, FAR *LPINPUTCONTEXT2;  
 
 /* Private display data */
 
 typedef struct SDL_VideoData
 {
+    int render;
+
 #if SDL_VIDEO_RENDER_D3D
     HANDLE d3dDLL;
     IDirect3D9 *d3d;
@@ -78,18 +125,45 @@ typedef struct SDL_VideoData
     HANDLE ddrawDLL;
     IDirectDraw *ddraw;
 #endif
+#ifdef _WIN32_WCE
+    HMODULE hAygShell;
+    PFNSHFullScreen SHFullScreen;
+    PFCoordTransform CoordTransform;
+#endif
 
-/* *INDENT-OFF* */
-    /* Function pointers for the Wacom API */
-    HANDLE wintabDLL;
-    UINT (*WTInfoA) (UINT, UINT, LPVOID);
-    HCTX (*WTOpenA) (HWND, LPLOGCONTEXTA, BOOL);
-    int (*WTPacket) (HCTX, UINT, LPVOID);
-    BOOL (*WTClose) (HCTX);
-/* *INDENT-ON* */
-
-    int keyboard;
     const SDL_scancode *key_layout;
+    DWORD clipboard_count;
+
+    SDL_bool ime_com_initialized;
+    struct ITfThreadMgr *ime_threadmgr;
+    SDL_bool ime_initialized;
+    SDL_bool ime_enabled;
+    SDL_bool ime_available;
+    HWND ime_hwnd_main;
+    HWND ime_hwnd_current;
+    HIMC ime_himc;
+
+    WCHAR ime_composition[SDL_TEXTEDITINGEVENT_TEXT_SIZE];
+    WCHAR ime_readingstring[16];
+    int ime_cursor;
+
+    HKL ime_hkl;
+    HMODULE ime_himm32;
+    UINT (WINAPI *GetReadingString)(HIMC himc, UINT uReadingBufLen, LPWSTR lpwReadingBuf, PINT pnErrorIndex, BOOL *pfIsVertical, PUINT puMaxReadingLen);
+    BOOL (WINAPI *ShowReadingWindow)(HIMC himc, BOOL bShow);
+    LPINPUTCONTEXT2 (WINAPI *ImmLockIMC)(HIMC himc);
+    BOOL (WINAPI *ImmUnlockIMC)(HIMC himc);
+    LPVOID (WINAPI *ImmLockIMCC)(HIMCC himcc);
+    BOOL (WINAPI *ImmUnlockIMCC)(HIMCC himcc);
+
+    SDL_bool ime_uiless;
+    struct ITfThreadMgrEx *ime_threadmgrex;
+    DWORD ime_uielemsinkcookie;
+    DWORD ime_alpnsinkcookie;
+    DWORD ime_openmodesinkcookie;
+    DWORD ime_convmodesinkcookie;
+    TSFSink *ime_uielemsink;
+    TSFSink *ime_ippasink;
 } SDL_VideoData;
 
 #endif /* _SDL_win32video_h */

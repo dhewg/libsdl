@@ -21,8 +21,11 @@
 */
 #include "SDL_config.h"
 
+#include <unistd.h> /* For getpid() and readlink() */
+
 #include "SDL_video.h"
 #include "SDL_mouse.h"
+#include "SDL_eventtouch.h" 
 #include "../SDL_sysvideo.h"
 #include "../SDL_pixels_c.h"
 
@@ -229,6 +232,10 @@ X11_CreateDevice(int devindex)
     device->GL_DeleteContext = X11_GLES_DeleteContext;
 #endif
 
+    device->SetClipboardText = X11_SetClipboardText;
+    device->GetClipboardText = X11_GetClipboardText;
+    device->HasClipboardText = X11_HasClipboardText;
+
     device->free = X11_DeleteDevice;
 
     return device;
@@ -239,6 +246,73 @@ VideoBootStrap X11_bootstrap = {
     X11_Available, X11_CreateDevice
 };
 
+static int (*handler) (Display *, XErrorEvent *) = NULL;
+static int
+X11_CheckWindowManagerErrorHandler(Display * d, XErrorEvent * e)
+{
+    if (e->error_code == BadWindow) {
+        return (0);
+    } else {
+        return (handler(d, e));
+    }
+}
+
+static void
+X11_CheckWindowManager(_THIS)
+{
+    SDL_VideoData *data = (SDL_VideoData *) _this->driverdata;
+    Display *display = data->display;
+    Atom _NET_SUPPORTING_WM_CHECK;
+    int status, real_format;
+    Atom real_type;
+    unsigned long items_read, items_left;
+    unsigned char *propdata;
+    Window wm_window = 0;
+#ifdef DEBUG_WINDOW_MANAGER
+    char *wm_name;
+#endif
+
+    /* Set up a handler to gracefully catch errors */
+    XSync(display, False);
+    handler = XSetErrorHandler(X11_CheckWindowManagerErrorHandler);
+
+    _NET_SUPPORTING_WM_CHECK = XInternAtom(display, "_NET_SUPPORTING_WM_CHECK", False);
+    status = XGetWindowProperty(display, DefaultRootWindow(display), _NET_SUPPORTING_WM_CHECK, 0L, 1L, False, XA_WINDOW, &real_type, &real_format, &items_read, &items_left, &propdata);
+    if (status == Success && items_read) {
+        wm_window = ((Window*)propdata)[0];
+    }
+    if (propdata) {
+        XFree(propdata);
+    }
+
+    if (wm_window) {
+        status = XGetWindowProperty(display, wm_window, _NET_SUPPORTING_WM_CHECK, 0L, 1L, False, XA_WINDOW, &real_type, &real_format, &items_read, &items_left, &propdata);
+        if (status != Success || !items_read || wm_window != ((Window*)propdata)[0]) {
+            wm_window = None;
+        }
+        if (propdata) {
+            XFree(propdata);
+        }
+    }
+
+    /* Reset the error handler, we're done checking */
+    XSync(display, False);
+    XSetErrorHandler(handler);
+
+    if (!wm_window) {
+#ifdef DEBUG_WINDOW_MANAGER
+        printf("Couldn't get _NET_SUPPORTING_WM_CHECK property\n");
+#endif
+        return;
+    }
+    data->net_wm = SDL_TRUE;
+
+#ifdef DEBUG_WINDOW_MANAGER
+    wm_name = X11_GetWindowTitle(_this, wm_window);
+    printf("Window manager: %s\n", wm_name);
+    SDL_free(wm_name);
+#endif
+}
 
 int
 X11_VideoInit(_THIS)
@@ -257,8 +331,20 @@ X11_VideoInit(_THIS)
 #endif
 
     /* Look up some useful Atoms */
-    data->WM_DELETE_WINDOW =
-        XInternAtom(data->display, "WM_DELETE_WINDOW", False);
+#define GET_ATOM(X) data->X = XInternAtom(data->display, #X, False)
+    GET_ATOM(WM_DELETE_WINDOW);
+    GET_ATOM(_NET_WM_STATE);
+    GET_ATOM(_NET_WM_STATE_HIDDEN);
+    GET_ATOM(_NET_WM_STATE_MAXIMIZED_VERT);
+    GET_ATOM(_NET_WM_STATE_MAXIMIZED_HORZ);
+    GET_ATOM(_NET_WM_STATE_FULLSCREEN);
+    GET_ATOM(_NET_WM_NAME);
+    GET_ATOM(_NET_WM_ICON_NAME);
+    GET_ATOM(_NET_WM_ICON);
+    GET_ATOM(UTF8_STRING);
+
+    /* Detect the window manager */
+    X11_CheckWindowManager(_this);
 
     if (X11_InitModes(_this) < 0) {
         return -1;
@@ -273,6 +359,7 @@ X11_VideoInit(_THIS)
     }
     X11_InitMouse(_this);
 
+    X11_InitTouch(_this);
     return 0;
 }
 
@@ -293,10 +380,11 @@ X11_VideoQuit(_THIS)
     X11_QuitModes(_this);
     X11_QuitKeyboard(_this);
     X11_QuitMouse(_this);
+    X11_QuitTouch(_this);
 }
 
 SDL_bool
-X11_UseDirectColorVisuals()
+X11_UseDirectColorVisuals(void)
 {
     /* Once we implement DirectColor colormaps and gamma ramp support...
        return SDL_getenv("SDL_VIDEO_X11_NODIRECTCOLOR") ? SDL_FALSE : SDL_TRUE;

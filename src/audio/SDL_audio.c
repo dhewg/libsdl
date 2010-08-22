@@ -69,18 +69,19 @@ extern AudioBootStrap MMEAUDIO_bootstrap;
 extern AudioBootStrap DART_bootstrap;
 extern AudioBootStrap NDSAUD_bootstrap;
 extern AudioBootStrap FUSIONSOUND_bootstrap;
+extern AudioBootStrap ANDROIDAUD_bootstrap;
 
 
 /* Available audio drivers */
 static const AudioBootStrap *const bootstrap[] = {
-#if SDL_AUDIO_DRIVER_BSD
-    &BSD_AUDIO_bootstrap,
-#endif
 #if SDL_AUDIO_DRIVER_PULSEAUDIO
     &PULSEAUDIO_bootstrap,
 #endif
 #if SDL_AUDIO_DRIVER_ALSA
     &ALSA_bootstrap,
+#endif
+#if SDL_AUDIO_DRIVER_BSD
+    &BSD_AUDIO_bootstrap,
 #endif
 #if SDL_AUDIO_DRIVER_OSS
     &DSP_bootstrap,
@@ -136,6 +137,9 @@ static const AudioBootStrap *const bootstrap[] = {
 #endif
 #if SDL_AUDIO_DRIVER_FUSIONSOUND
     &FUSIONSOUND_bootstrap,
+#endif
+#if SDL_AUDIO_DRIVER_ANDROID
+    &ANDROIDAUD_bootstrap,
 #endif
     NULL
 };
@@ -257,7 +261,7 @@ finalize_audio_entry_points(void)
 
 /* Streaming functions (for when the input and output buffer sizes are different) */
 /* Write [length] bytes from buf into the streamer */
-void
+static void
 SDL_StreamWrite(SDL_AudioStreamer * stream, Uint8 * buf, int length)
 {
     int i;
@@ -269,7 +273,7 @@ SDL_StreamWrite(SDL_AudioStreamer * stream, Uint8 * buf, int length)
 }
 
 /* Read [length] bytes out of the streamer into buf */
-void
+static void
 SDL_StreamRead(SDL_AudioStreamer * stream, Uint8 * buf, int length)
 {
     int i;
@@ -280,14 +284,15 @@ SDL_StreamRead(SDL_AudioStreamer * stream, Uint8 * buf, int length)
     }
 }
 
-int
+static int
 SDL_StreamLength(SDL_AudioStreamer * stream)
 {
     return (stream->write_pos - stream->read_pos) % stream->max_len;
 }
 
 /* Initialize the stream by allocating the buffer and setting the read/write heads to the beginning */
-int
+#if 0
+static int
 SDL_StreamInit(SDL_AudioStreamer * stream, int max_len, Uint8 silence)
 {
     /* First try to allocate the buffer */
@@ -305,9 +310,10 @@ SDL_StreamInit(SDL_AudioStreamer * stream, int max_len, Uint8 silence)
 
     return 0;
 }
+#endif
 
 /* Deinitialize the stream simply by freeing the buffer */
-void
+static void
 SDL_StreamDeinit(SDL_AudioStreamer * stream)
 {
     if (stream->buffer != NULL) {
@@ -315,6 +321,8 @@ SDL_StreamDeinit(SDL_AudioStreamer * stream)
     }
 }
 
+
+#include <android/log.h>
 
 /* The general mixing thread function */
 int SDLCALL

@@ -22,8 +22,11 @@
 
 #import "SDL_uikitview.h"
 
+#include "../../events/SDL_keyboard_c.h"
+#include "../../events/SDL_mouse_c.h"
+#include "../../events/SDL_touch_c.h"
+
 #if SDL_IPHONE_KEYBOARD
-#import "SDL_keyboard_c.h"
 #import "keyinfotable.h"
 #import "SDL_uikitappdelegate.h"
 #import "SDL_uikitwindow.h"
@@ -33,7 +36,6 @@
 
 - (void)dealloc {
 #if SDL_IPHONE_KEYBOARD
-	SDL_DelKeyboard(0);
 	[textField release];
 #endif
 	[super dealloc];
@@ -47,14 +49,27 @@
 	[self initializeKeyboard];
 #endif	
 
-	int i;
-	for (i=0; i<MAX_SIMULTANEOUS_TOUCHES; i++) {
-        mice[i].id = i;
-		mice[i].driverdata = NULL;
-		SDL_AddMouse(&mice[i], "Mouse", 0, 0, 1);
-	}
-	self.multipleTouchEnabled = YES;
-			
+#ifdef FIXED_MULTITOUCH
+	SDL_Touch touch;
+	touch.id = 0; //TODO: Should be -1?
+
+	//touch.driverdata = SDL_malloc(sizeof(EventTouchData));
+	//EventTouchData* data = (EventTouchData*)(touch.driverdata);
+	
+	touch.x_min = 0;
+	touch.x_max = frame.size.width;
+	touch.native_xres = touch.x_max - touch.x_min;
+	touch.y_min = 0;
+	touch.y_max = frame.size.height;
+	touch.native_yres = touch.y_max - touch.y_min;
+	touch.pressure_min = 0;
+	touch.pressure_max = 1;
+	touch.native_pressureres = touch.pressure_max - touch.pressure_min;
+
+
+	touchId = SDL_AddTouch(&touch, "IPHONE SCREEN");
+#endif
+
 	return self;
 
 }
@@ -62,71 +77,87 @@
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
 
 	NSEnumerator *enumerator = [touches objectEnumerator];
-	UITouch *touch =(UITouch*)[enumerator nextObject];
+	UITouch *touch = (UITouch*)[enumerator nextObject];
 	
-	/* associate touches with mice, so long as we have slots */
-	int i;
-	int found = 0;
-	for(i=0; touch && i < MAX_SIMULTANEOUS_TOUCHES; i++) {
+	//NSLog("Click");
 	
-		/* check if this mouse is already tracking a touch */
-		if (mice[i].driverdata != NULL) {
-			continue;
-		}
-		/*	
-			mouse not associated with anything right now,
-			associate the touch with this mouse
-		*/
-		found = 1;
-		
-		/* save old mouse so we can switch back */
-		int oldMouse = SDL_SelectMouse(-1);
-		
-		/* select this slot's mouse */
-		SDL_SelectMouse(i);
+	if (touch) {
 		CGPoint locationInView = [touch locationInView: self];
-		
-		/* set driver data to touch object, we'll use touch object later */
-		mice[i].driverdata = [touch retain];
-		
+			
 		/* send moved event */
-		SDL_SendMouseMotion(i, 0, locationInView.x, locationInView.y, 0);
-		
+		SDL_SendMouseMotion(NULL, 0, locationInView.x, locationInView.y);
+
 		/* send mouse down event */
-		SDL_SendMouseButton(i, SDL_PRESSED, SDL_BUTTON_LEFT);
-		
-		/* re-calibrate relative mouse motion */
-		SDL_GetRelativeMouseState(i, NULL, NULL);
-		
-		/* grab next touch */
-		touch = (UITouch*)[enumerator nextObject]; 
-		
-		/* switch back to our old mouse */
-		SDL_SelectMouse(oldMouse);
-		
-	}	
+		SDL_SendMouseButton(NULL, SDL_PRESSED, SDL_BUTTON_LEFT);
+	}
+
+#ifdef FIXED_MULTITOUCH
+	while(touch) {
+	  CGPoint locationInView = [touch locationInView: self];
+
+
+#ifdef IPHONE_TOUCH_EFFICIENT_DANGEROUS
+	  //FIXME: TODO: Using touch as the fingerId is potentially dangerous
+	  //It is also much more efficient than storing the UITouch pointer
+	  //and comparing it to the incoming event.
+	  SDL_SendFingerDown(touchId,(long)touch,
+			     SDL_TRUE,locationInView.x,locationInView.y,
+			     1);
+#else
+	  int i;
+	  for(i = 0;i < MAX_SIMULTANEOUS_TOUCHES;i++) {
+	    if(finger[i] == NULL) {
+	      finger[i] = touch;
+	      SDL_SendFingerDown(touchId,i,
+				 SDL_TRUE,locationInView.x,locationInView.y,
+				 1);
+	      break;
+	    }
+	  }
+#endif
+	  
+
+	  
+
+	  touch = (UITouch*)[enumerator nextObject]; 
+	}
+#endif
 }
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
 	
 	NSEnumerator *enumerator = [touches objectEnumerator];
-	UITouch *touch=nil;
+	UITouch *touch = (UITouch*)[enumerator nextObject];
 	
-	while(touch = (UITouch *)[enumerator nextObject]) {
-		/* search for the mouse slot associated with this touch */
-		int i, found = NO;
-		for (i=0; i<MAX_SIMULTANEOUS_TOUCHES && !found; i++) {
-			if (mice[i].driverdata == touch) {
-				/* found the mouse associate with the touch */
-				[(UITouch*)(mice[i].driverdata) release];
-				mice[i].driverdata = NULL;
-				/* send mouse up */
-				SDL_SendMouseButton(i, SDL_RELEASED, SDL_BUTTON_LEFT);
-				/* discontinue search for this touch */
-				found = YES;
-			}
-		}
+	if (touch) {
+		/* send mouse up */
+		SDL_SendMouseButton(NULL, SDL_RELEASED, SDL_BUTTON_LEFT);
 	}
+
+#ifdef FIXED_MULTITOUCH
+	while(touch) {
+	  CGPoint locationInView = [touch locationInView: self];
+	  
+
+#ifdef IPHONE_TOUCH_EFFICIENT_DANGEROUS
+	  SDL_SendFingerDown(touchId,(long)touch,
+			     SDL_FALSE,locationInView.x,locationInView.y,
+			     1);
+#else
+	  int i;
+	  for(i = 0;i < MAX_SIMULTANEOUS_TOUCHES;i++) {
+	    if(finger[i] == touch) {
+	      SDL_SendFingerDown(touchId,i,
+				 SDL_FALSE,locationInView.x,locationInView.y,
+				 1);
+	      break;
+	    }
+	  }
+#endif
+
+	  touch = (UITouch*)[enumerator nextObject]; 
+	}
+#endif
 }
 
 - (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event {
@@ -141,22 +172,39 @@
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
 	
 	NSEnumerator *enumerator = [touches objectEnumerator];
-	UITouch *touch=nil;
+	UITouch *touch = (UITouch*)[enumerator nextObject];
 	
-	while(touch = (UITouch *)[enumerator nextObject]) {
-		/* try to find the mouse associated with this touch */
-		int i, found = NO;
-		for (i=0; i<MAX_SIMULTANEOUS_TOUCHES && !found; i++) {
-			if (mice[i].driverdata == touch) {
-				/* found proper mouse */
-				CGPoint locationInView = [touch locationInView: self];
-				/* send moved event */
-				SDL_SendMouseMotion(i, 0, locationInView.x, locationInView.y, 0);
-				/* discontinue search */
-				found = YES;
-			}
-		}
+	if (touch) {
+		CGPoint locationInView = [touch locationInView: self];
+
+		/* send moved event */
+		SDL_SendMouseMotion(NULL, 0, locationInView.x, locationInView.y);
 	}
+
+#ifdef FIXED_MULTITOUCH
+	while(touch) {
+	  CGPoint locationInView = [touch locationInView: self];
+	  
+
+#ifdef IPHONE_TOUCH_EFFICIENT_DANGEROUS
+	  SDL_SendTouchMotion(touchId,(long)touch,
+			      SDL_FALSE,locationInView.x,locationInView.y,
+			      1);
+#else
+	  int i;
+	  for(i = 0;i < MAX_SIMULTANEOUS_TOUCHES;i++) {
+	    if(finger[i] == touch) {
+	      SDL_SendTouchMotion(touchId,i,
+				  SDL_FALSE,locationInView.x,locationInView.y,
+				  1);
+	      break;
+	    }
+	  }
+#endif
+
+	  touch = (UITouch*)[enumerator nextObject]; 
+	}
+#endif
 }
 
 /*
@@ -190,15 +238,6 @@
 	keyboardVisible = NO;
 	/* add the UITextField (hidden) to our view */
 	[self addSubview: textField];
-	
-	/* create our SDL_Keyboard */
-	SDL_Keyboard keyboard;
-	SDL_zero(keyboard);
-	SDL_AddKeyboard(&keyboard, 0);
-	SDLKey keymap[SDL_NUM_SCANCODES];
-	SDL_GetDefaultKeymap(keymap);
-	SDL_SetKeymap(0, 0, keymap, SDL_NUM_SCANCODES);
-	
 }
 
 /* reveal onscreen virtual keyboard */
@@ -218,8 +257,8 @@
 	
 	if ([string length] == 0) {
 		/* it wants to replace text with nothing, ie a delete */
-		SDL_SendKeyboardKey( 0, SDL_PRESSED, SDL_SCANCODE_DELETE);
-		SDL_SendKeyboardKey( 0, SDL_RELEASED, SDL_SCANCODE_DELETE);
+		SDL_SendKeyboardKey(SDL_PRESSED, SDL_SCANCODE_DELETE);
+		SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_DELETE);
 	}
 	else {
 		/* go through all the characters in the string we've been sent
@@ -245,14 +284,14 @@
 			
 			if (mod & KMOD_SHIFT) {
 				/* If character uses shift, press shift down */
-				SDL_SendKeyboardKey( 0, SDL_PRESSED, SDL_SCANCODE_LSHIFT);
+				SDL_SendKeyboardKey(SDL_PRESSED, SDL_SCANCODE_LSHIFT);
 			}
 			/* send a keydown and keyup even for the character */
-			SDL_SendKeyboardKey( 0, SDL_PRESSED, code);
-			SDL_SendKeyboardKey( 0, SDL_RELEASED, code);
+			SDL_SendKeyboardKey(SDL_PRESSED, code);
+			SDL_SendKeyboardKey(SDL_RELEASED, code);
 			if (mod & KMOD_SHIFT) {
 				/* If character uses shift, press shift back up */
-				SDL_SendKeyboardKey( 0, SDL_RELEASED, SDL_SCANCODE_LSHIFT);
+				SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_LSHIFT);
 			}			
 		}
 	}

@@ -336,6 +336,11 @@ struct SDL_VideoDevice
     void (*StopTextInput) (_THIS);
     void (*SetTextInputRect) (_THIS, SDL_Rect *rect);
 
+    /* Clipboard */
+    int (*SetClipboardText) (_THIS, const char *text);
+    char * (*GetClipboardText) (_THIS);
+    SDL_bool (*HasClipboardText) (_THIS);
+
     /* * * */
     /* Data common to all drivers */
     SDL_bool suspend_screensaver;
@@ -345,6 +350,7 @@ struct SDL_VideoDevice
     Uint8 window_magic;
     Uint8 texture_magic;
     Uint32 next_object_id;
+    char * clipboard_text;
 
     /* * * */
     /* Data used by the GL drivers */
@@ -414,9 +420,6 @@ extern VideoBootStrap PS3_bootstrap;
 #if SDL_VIDEO_DRIVER_SVGALIB
 extern VideoBootStrap SVGALIB_bootstrap;
 #endif
-#if SDL_VIDEO_DRIVER_GAPI
-extern VideoBootStrap GAPI_bootstrap;
-#endif
 #if SDL_VIDEO_DRIVER_WIN32
 extern VideoBootStrap WIN32_bootstrap;
 #endif
@@ -447,11 +450,14 @@ extern VideoBootStrap NDS_bootstrap;
 #if SDL_VIDEO_DRIVER_PANDORA
 extern VideoBootStrap PND_bootstrap;
 #endif
+#if SDL_VIDEO_DRIVER_ANDROID
+extern VideoBootStrap Android_bootstrap;
+#endif
 
 #define SDL_CurrentDisplay	(&_this->displays[_this->current_display])
 #define SDL_CurrentRenderer	(SDL_CurrentDisplay->current_renderer)
 
-extern SDL_VideoDevice *SDL_GetVideoDevice();
+extern SDL_VideoDevice *SDL_GetVideoDevice(void);
 extern int SDL_AddBasicVideoDisplay(const SDL_DisplayMode * desktop_mode);
 extern int SDL_AddVideoDisplay(const SDL_VideoDisplay * display);
 extern SDL_bool SDL_AddDisplayMode(SDL_VideoDisplay *display, const SDL_DisplayMode * mode);

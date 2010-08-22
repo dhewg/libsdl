@@ -80,7 +80,7 @@ generate_rowbytes(int src_w, int dst_w, int bpp)
 
     int i;
     int pos, inc;
-    unsigned char *eip;
+    unsigned char *eip, *fence;
     unsigned char load, store;
 
     /* See if we need to regenerate the copy buffer */
@@ -116,13 +116,20 @@ generate_rowbytes(int src_w, int dst_w, int bpp)
     pos = 0x10000;
     inc = (src_w << 16) / dst_w;
     eip = copy_row;
+    fence = copy_row + sizeof(copy_row)-2;
     for (i = 0; i < dst_w; ++i) {
         while (pos >= 0x10000L) {
+            if (eip == fence) {
+                return -1;
+            }
             if (bpp == 2) {
                 *eip++ = PREFIX16;
             }
             *eip++ = load;
             pos -= 0x10000L;
+        }
+        if (eip == fence) {
+            return -1;
         }
         if (bpp == 2) {
             *eip++ = PREFIX16;
@@ -132,11 +139,6 @@ generate_rowbytes(int src_w, int dst_w, int bpp)
     }
     *eip++ = RETURN;
 
-    /* Verify that we didn't overflow (too late!!!) */
-    if (eip > (copy_row + sizeof(copy_row))) {
-        SDL_SetError("Copy buffer overflow");
-        return (-1);
-    }
 #ifdef HAVE_MPROTECT
     /* Make the code executable but not writeable */
     if (mprotect(copy_row, sizeof(copy_row), PROT_READ | PROT_EXEC) < 0) {
@@ -151,7 +153,7 @@ generate_rowbytes(int src_w, int dst_w, int bpp)
 #endif /* USE_ASM_STRETCH */
 
 #define DEFINE_COPY_ROW(name, type)			\
-void name(type *src, int src_w, type *dst, int dst_w)	\
+static void name(type *src, int src_w, type *dst, int dst_w)	\
 {							\
 	int i;						\
 	int pos, inc;					\
@@ -175,7 +177,7 @@ DEFINE_COPY_ROW(copy_row4, Uint32)
 /* *INDENT-ON* */
 
 /* The ASM code doesn't handle 24-bpp stretch blits */
-void
+static void
 copy_row3(Uint8 * src, int src_w, Uint8 * dst, int dst_w)
 {
     int i;

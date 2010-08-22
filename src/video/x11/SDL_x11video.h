@@ -45,17 +45,28 @@
 #if SDL_VIDEO_DRIVER_X11_SCRNSAVER
 #include <X11/extensions/scrnsaver.h>
 #endif
+#if SDL_VIDEO_DRIVER_X11_XRENDER
+#include <X11/extensions/Xrender.h>
+#endif
+#if SDL_VIDEO_DRIVER_X11_XDAMAGE
+#include <X11/extensions/Xdamage.h>
+#endif
+#if SDL_VIDEO_DRIVER_X11_XFIXES
+#include <X11/extensions/Xfixes.h>
+#endif
 #if SDL_VIDEO_DRIVER_X11_XSHAPE
 #include <X11/extensions/shape.h>
 #endif
 
 #include "SDL_x11dyn.h"
 
+#include "SDL_x11clipboard.h"
 #include "SDL_x11events.h"
 #include "SDL_x11gamma.h"
 #include "SDL_x11keyboard.h"
 #include "SDL_x11modes.h"
 #include "SDL_x11mouse.h"
+#include "SDL_eventtouch.h"
 #include "SDL_x11opengl.h"
 #include "SDL_x11window.h"
 
@@ -70,12 +81,27 @@ typedef struct SDL_VideoData
     int numwindows;
     SDL_WindowData **windowlist;
     int windowlistlength;
-    int keyboard;
+
+    /* This is true for ICCCM2.0-compliant window managers */
+    SDL_bool net_wm;
+
+    /* Useful atoms */
     Atom WM_DELETE_WINDOW;
+    Atom _NET_WM_STATE;
+    Atom _NET_WM_STATE_HIDDEN;
+    Atom _NET_WM_STATE_MAXIMIZED_VERT;
+    Atom _NET_WM_STATE_MAXIMIZED_HORZ;
+    Atom _NET_WM_STATE_FULLSCREEN;
+    Atom _NET_WM_NAME;
+    Atom _NET_WM_ICON_NAME;
+    Atom _NET_WM_ICON;
+    Atom UTF8_STRING;
+
     SDL_scancode key_layout[256];
+    SDL_bool selection_waiting;
 } SDL_VideoData;
 
-extern SDL_bool X11_UseDirectColorVisuals();
+extern SDL_bool X11_UseDirectColorVisuals(void);
 
 #endif /* _SDL_x11video_h */
 

@@ -67,9 +67,6 @@ static VideoBootStrap *bootstrap[] = {
 #if SDL_VIDEO_DRIVER_SVGALIB
     &SVGALIB_bootstrap,
 #endif
-#if SDL_VIDEO_DRIVER_GAPI
-    &GAPI_bootstrap,
-#endif
 #if SDL_VIDEO_DRIVER_WIN32
     &WIN32_bootstrap,
 #endif
@@ -99,6 +96,9 @@ static VideoBootStrap *bootstrap[] = {
 #endif
 #if SDL_VIDEO_DRIVER_PANDORA
     &PND_bootstrap,
+#endif
+#if SDL_VIDEO_DRIVER_ANDROID
+    &Android_bootstrap,
 #endif
     NULL
 };
@@ -304,7 +304,7 @@ SDL_GetCurrentVideoDriver()
 }
 
 SDL_VideoDevice *
-SDL_GetVideoDevice()
+SDL_GetVideoDevice(void)
 {
     return _this;
 }
@@ -715,16 +715,6 @@ SDL_SetDisplayModeForDisplay(SDL_VideoDisplay * display, const SDL_DisplayMode *
     }
 
     return 0;
-}
-
-int
-SDL_SetDisplayMode(const SDL_DisplayMode * mode)
-{
-    if (!_this) {
-        SDL_UninitializedVideo();
-        return -1;
-    }
-    return SDL_SetDisplayModeForDisplay(SDL_CurrentDisplay, mode);
 }
 
 int
@@ -2843,6 +2833,10 @@ SDL_VideoQuit(void)
         SDL_free(_this->displays);
         _this->displays = NULL;
     }
+    if (_this->clipboard_text) {
+        SDL_free(_this->clipboard_text);
+        _this->clipboard_text = NULL;
+    }
     _this->free(_this);
     _this = NULL;
 }
@@ -3277,7 +3271,7 @@ SDL_GL_SwapWindow(SDL_Window * window)
 void
 SDL_GL_DeleteContext(SDL_GLContext context)
 {
-    if (!_this || !context) {
+    if (!_this || !_this->gl_data || !context) {
         return;
     }
     _this->GL_MakeCurrent(_this, NULL, NULL);
