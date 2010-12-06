@@ -187,7 +187,7 @@ static int update_event_mask(uint32_t mask, void *data)
     SDL_WaylandData *d = data;
 
     d->event_mask = mask;
-    printf(stderr, "updated event_mask: %d\n", mask);
+    printf("updated event_mask: %d\n", mask);
 
 #if 0
     if (mask & WL_DISPLAY_READABLE)
