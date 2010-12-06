@@ -25,8 +25,8 @@
 #define _SDL_waylandvideo_h
 
 #include "../SDL_sysvideo.h"
-#include </home/joel/install/include/wayland-client.h>
-#include </home/joel/install/include/wayland-client-protocol.h>
+#include <wayland-client.h>
+#include <wayland-client-protocol.h>
 #define GL_GLEXT_PROTOTYPES
 #define EGL_EGLEXT_PROTOTYPES
 #include <EGL/egl.h>
@@ -52,7 +52,10 @@ typedef struct
     int drm_fd;
     
     EGLDisplay edpy;
-    
+    GLuint fbo;
+
+    int event_fd;
+    int event_mask; 
 } SDL_WaylandData;
 
 #endif /* _SDL_nullvideo_h */

@@ -10,9 +10,10 @@ void Wayland_GL_SwapWindow(_THIS, SDL_Window * window)
     SDL_WaylandWindow *data = window->driverdata;
     data->current ^= 1;
 
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER,
-                  GL_COLOR_ATTACHMENT0,
-                  GL_RENDERBUFFER,
+    glFlush();
+    glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER_EXT,
+                  GL_COLOR_ATTACHMENT0_EXT,
+                  GL_RENDERBUFFER_EXT,
                   data->rbo[data->current]);
 
     wl_surface_attach(data->surface,
@@ -27,11 +28,32 @@ Wayland_GL_MakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context)
     printf("Wayland_GL_MakeCurrent\n");
     SDL_WaylandData *data = _this->driverdata;
     SDL_WaylandWindow *wind = (SDL_WaylandWindow *) window->driverdata;
+    int i;
+
     if (!eglMakeCurrent(data->edpy,EGL_NO_SURFACE,
                         EGL_NO_SURFACE,wind->context)) {
         SDL_SetError("Unable to make EGL context current");
         return -1;
     }
+
+
+	glGenFramebuffers(1, &data->fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER_EXT, data->fbo);
+
+	glGenRenderbuffers(2, wind->rbo);
+	for (i = 0; i < 2; ++i) {
+		glBindRenderbuffer(GL_RENDERBUFFER_EXT, wind->rbo[i]);
+		glEGLImageTargetRenderbufferStorageOES(GL_RENDERBUFFER_EXT,
+						       wind->image[i]);
+	}
+
+	wind->current = 0;
+	glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER_EXT,
+				  GL_COLOR_ATTACHMENT0_EXT,
+				  GL_RENDERBUFFER_EXT,
+				  wind->rbo[wind->current]);
+	fprintf(stderr, "framebuffer complete: %d\n",
+			glCheckFramebufferStatus(GL_FRAMEBUFFER_EXT) == GL_FRAMEBUFFER_COMPLETE);
 
     return 1;
 }
@@ -102,11 +124,13 @@ Wayland_GL_LoadLibrary(_THIS, const char *path)
     
     data->edpy = eglGetDRMDisplayMESA(data->drm_fd);
 
-	int major, minor;
-	if (!eglInitialize(data->edpy, &major, &minor)) {
-		fprintf(stderr, "failed to initialize display\n");
-		return -1;
-	}
+    int major, minor;
+    if (!eglInitialize(data->edpy, &major, &minor)) {
+        fprintf(stderr, "failed to initialize display\n");
+        return -1;
+    }
+
+    eglBindAPI(EGL_OPENGL_API);
 
 /*	if (!eglBindAPI(EGL_OPENGL_ES_API)) {
 		fprintf(stderr, "failed to bind EGL_OPENGL_ES_API\n");
@@ -159,12 +183,9 @@ Wayland_GL_CreateContext(_THIS, SDL_Window * window)
     SDL_WaylandWindow *wind = (SDL_WaylandWindow *) window->driverdata;
     //Display *display = data->videodata->display;
 
+    printf("Wayland_GL_CreateContext\n");
 
-	static const EGLint context_attribs[] = {
-		EGL_CONTEXT_CLIENT_VERSION, 2,
-		EGL_NONE
-	};
-    wind->context = eglCreateContext(data->edpy, NULL, EGL_NO_CONTEXT, context_attribs);
+    wind->context = eglCreateContext(data->edpy, NULL, EGL_NO_CONTEXT, NULL);
 
 
     if (wind->context == EGL_NO_CONTEXT) {
@@ -172,8 +193,8 @@ Wayland_GL_CreateContext(_THIS, SDL_Window * window)
         return NULL;
     }
 
+    Wayland_GL_MakeCurrent(_this, window, NULL);
     //data->egl_active = 1;
-
 
     return 1;
 }
@@ -189,3 +210,5 @@ Wayland_GL_GetSwapInterval(_THIS)
 {
     return 0;
 }
+
+/* vi: set ts=4 sw=4 expandtab: */

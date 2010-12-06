@@ -91,11 +91,10 @@ Wayland_CreateDevice(int devindex)
     device->GL_CreateContext = Wayland_GL_CreateContext;
     device->GL_LoadLibrary = Wayland_GL_LoadLibrary;
     device->GL_UnloadLibrary = Wayland_GL_UnloadLibrary;
-	
-	
-	
-    device->CreateWindow = Wayland_CreateWindow;
+    
 
+    device->CreateWindow = Wayland_CreateWindow;
+    device->ShowWindow = Wayland_ShowWindow;
 
     device->free = Wayland_DeleteDevice;
 
@@ -183,6 +182,22 @@ display_handle_global(struct wl_display *display, uint32_t id,
 }
 
 
+static int update_event_mask(uint32_t mask, void *data)
+{
+    SDL_WaylandData *d = data;
+
+    d->event_mask = mask;
+    printf(stderr, "updated event_mask: %d\n", mask);
+
+#if 0
+    if (mask & WL_DISPLAY_READABLE)
+        wl_display_iterate(d->display, WL_DISPLAY_READABLE);
+#endif
+    if (mask & WL_DISPLAY_WRITABLE)
+        wl_display_iterate(d->display, WL_DISPLAY_WRITABLE);
+    
+    return 0;
+}
 
 int
 Wayland_VideoInit(_THIS)
@@ -230,8 +245,7 @@ Wayland_VideoInit(_THIS)
 	    wl_display_iterate (data->display, WL_DISPLAY_READABLE);
 
 
-
-
+    data->event_fd = wl_display_get_fd(data->display, update_event_mask, data);
 
     SDL_VideoDisplay display;
     SDL_DisplayMode mode;
