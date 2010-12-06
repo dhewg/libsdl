@@ -336,6 +336,9 @@ extern VideoBootStrap Android_bootstrap;
 #if SDL_VIDEO_DRIVER_DUMMY
 extern VideoBootStrap DUMMY_bootstrap;
 #endif
+#if SDL_VIDEO_DRIVER_WAYLAND
+extern VideoBootStrap Wayland_bootstrap;
+#endif
 
 extern SDL_VideoDevice *SDL_GetVideoDevice(void);
 extern int SDL_AddBasicVideoDisplay(const SDL_DisplayMode * desktop_mode);
