@@ -160,6 +160,7 @@ window_handle_pointer_focus(void *data,
 
 		set_pointer_image(input, time, pointer);*/
 	} else {
+		SDL_SetMouseFocus(NULL);
 		input->pointer_focus = NULL;
 		//input->current_pointer_image = POINTER_UNSET;
 	}
@@ -194,6 +195,8 @@ window_handle_keyboard_focus(void *data,
 	if (window){
 		window->keyboard_device = input;
 		SDL_SetKeyboardFocus(window->sdlwindow);
+	}else{
+		SDL_SetKeyboardFocus(NULL);
 	}
 
 }

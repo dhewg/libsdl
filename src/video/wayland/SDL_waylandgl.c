@@ -18,7 +18,7 @@ void Wayland_GL_SwapWindow(_THIS, SDL_Window * window)
 
     wl_surface_attach(data->surface,
               data->buffer[data->current ^ 1]);
-    wl_surface_damage(data->surface, 0, 0,
+    wl_surface_damage(data->surface, window->x, window->y,
                   window->w, window->h);
 }
 

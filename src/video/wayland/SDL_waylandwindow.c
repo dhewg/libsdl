@@ -13,23 +13,33 @@ void Wayland_ShowWindow(_THIS, SDL_Window * window)
 	wl_surface_attach(data->surface,
 			  data->buffer[data->current]);
 	wl_surface_map(data->surface,
-		       0, 0,
+		       window->x, window->y,
 		       window->w, window->h);
 }
 
 
 int Wayland_CreateWindow(_THIS, SDL_Window * window)
 {
-    printf("window create\n");
+
     SDL_WaylandWindow *data;
+    struct wl_visual *visual;
+	int i;
+	SDL_WaylandData *c;
+	
 	data = malloc(sizeof *data);
 	if (data == NULL)
 		return 0;
-    SDL_WaylandData *c;
+    
     c = _this->driverdata;
     window->driverdata = data;
-	struct wl_visual *visual;
-	int i;
+
+	if (window->x == SDL_WINDOWPOS_UNDEFINED) {
+		window->x = 0;
+	}
+	if (window->y == SDL_WINDOWPOS_UNDEFINED) {
+		window->y = 0;
+	}
+	
 	data->waylandData = c;
 	data->sdlwindow = window;
 	EGLint name, stride, attribs[] = {
@@ -59,7 +69,7 @@ int Wayland_CreateWindow(_THIS, SDL_Window * window)
 					     stride, visual);
 	}
 	data->current = 0;
-    printf("window %d %d\n", window->w, window->h);
+
 
     return 0;
 }
