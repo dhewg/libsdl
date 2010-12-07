@@ -84,3 +84,16 @@ int Wayland_CreateWindow(_THIS, SDL_Window * window)
 
     return 0;
 }
+
+extern void Wayland_DestroyWindow(_THIS, SDL_Window * window)
+{
+	SDL_WaylandWindow *data = (SDL_WaylandWindow*) window->driverdata;
+	SDL_WaylandData *d;
+        window->driverdata = NULL;
+
+	if (data) {
+		d = data->waylandData;
+		wl_surface_destroy(data->surface);
+	}
+	SDL_free(data);
+}

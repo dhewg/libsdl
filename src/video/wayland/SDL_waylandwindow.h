@@ -27,6 +27,7 @@ typedef struct
 
 extern void Wayland_ShowWindow(_THIS, SDL_Window * window);
 extern int Wayland_CreateWindow(_THIS, SDL_Window * window);
+extern void Wayland_DestroyWindow(_THIS, SDL_Window * window);
 
 #endif /* _SDL_waylandwindow_h */
 
