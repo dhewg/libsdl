@@ -14,7 +14,7 @@ void Wayland_GL_SwapWindow(_THIS, SDL_Window * window)
     glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER_EXT,
                   GL_COLOR_ATTACHMENT0_EXT,
                   GL_RENDERBUFFER_EXT,
-                  data->rbo[data->current]);
+                  data->color_rbo[data->current]);
 
     wl_surface_attach(data->surface,
               data->buffer[data->current ^ 1]);
@@ -36,13 +36,22 @@ Wayland_GL_MakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context)
         return -1;
     }
 
-
 	glGenFramebuffers(1, &data->fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER_EXT, data->fbo);
 
-	glGenRenderbuffers(2, wind->rbo);
+    glGenRenderbuffers(1, &wind->depth_rbo);
+	glBindRenderbuffer(GL_RENDERBUFFER_EXT, wind->depth_rbo);
+	glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER_EXT,
+                              GL_DEPTH_ATTACHMENT_EXT,
+                              GL_RENDERBUFFER_EXT,
+                              wind->depth_rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER_EXT,
+                          GL_DEPTH_COMPONENT,
+                          wind->sdlwindow->w, wind->sdlwindow->h);
+
+	glGenRenderbuffers(2, wind->color_rbo);
 	for (i = 0; i < 2; ++i) {
-		glBindRenderbuffer(GL_RENDERBUFFER_EXT, wind->rbo[i]);
+		glBindRenderbuffer(GL_RENDERBUFFER_EXT, wind->color_rbo[i]);
 		glEGLImageTargetRenderbufferStorageOES(GL_RENDERBUFFER_EXT,
 						       wind->image[i]);
 	}
@@ -51,7 +60,7 @@ Wayland_GL_MakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context)
 	glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER_EXT,
 				  GL_COLOR_ATTACHMENT0_EXT,
 				  GL_RENDERBUFFER_EXT,
-				  wind->rbo[wind->current]);
+				  wind->color_rbo[wind->current]);
 	printf("framebuffer complete: %d\n",
 			glCheckFramebufferStatus(GL_FRAMEBUFFER_EXT) == GL_FRAMEBUFFER_COMPLETE);
 

@@ -15,8 +15,8 @@ typedef struct
     struct wl_buffer	*buffer[2];
 
     EGLImageKHR     image[2];
-    GLuint          rbo[2];
-    uint32_t        fb_id[2];
+    GLuint          color_rbo[2];
+    GLuint          depth_rbo;
     uint32_t        current;
     
     struct SDL_WaylandInput *keyboard_device;

@@ -95,7 +95,8 @@ void Wayland_DestroyWindow(_THIS, SDL_Window * window)
 	if (data) {
 		d = data->waylandData;
 
-		glDeleteRenderbuffers(2, data->rbo);
+		glDeleteRenderbuffers(1, &data->depth_rbo);
+		glDeleteRenderbuffers(2, data->color_rbo);
 		for (i = 0; i < 2; ++i) {
 			wl_buffer_destroy(data->buffer[i]);
 			eglDestroyImageKHR(d->edpy, data->image[i]);
