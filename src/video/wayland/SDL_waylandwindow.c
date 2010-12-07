@@ -61,6 +61,12 @@ int Wayland_CreateWindow(_THIS, SDL_Window * window)
 		attribs[3] = window->h;
 		data->image[i] =
 			eglCreateDRMImageMESA(c->edpy, attribs);
+		if (data->image[i] == NULL) {
+			SDL_SetError("Failed to create  DRM-Image with attribs: width: %d, height: %d\n",
+				     window->w, window->h);
+			free(data);
+			return -1;
+		}
 		eglExportDRMImageMESA(c->edpy, data->image[i],
 				      &name, NULL, &stride);
 		data->buffer[i] =
