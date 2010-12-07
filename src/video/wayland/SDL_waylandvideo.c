@@ -31,9 +31,9 @@
 
 #include "SDL_waylandvideo.h"
 #include "SDL_waylandevents_c.h"
-#include "SDL_waylandrender_c.h"
 #include "SDL_waylandwindow.h"
 #include "SDL_waylandgl.h"
+#include "../SDL_renderer_gl.h"
 
 
 #define WAYLANDVID_DRIVER_NAME "wayland"
@@ -93,6 +93,7 @@ Wayland_CreateDevice(int devindex)
     device->GL_CreateContext = Wayland_GL_CreateContext;
     device->GL_LoadLibrary = Wayland_GL_LoadLibrary;
     device->GL_UnloadLibrary = Wayland_GL_UnloadLibrary;
+    device->GL_GetProcAddress = Wayland_GL_GetProcAddress;
     
 
     device->CreateWindow = Wayland_CreateWindow;
@@ -258,8 +259,8 @@ Wayland_VideoInit(_THIS)
 
     /* Use a fake 32-bpp desktop mode */
     mode.format = SDL_PIXELFORMAT_RGB888;
-    mode.w = 1024;
-    mode.h = 768;
+    mode.w = data->screen_allocation.width;
+    mode.h = data->screen_allocation.width;
     mode.refresh_rate = 0;
     mode.driverdata = NULL;
     SDL_zero(display);
@@ -267,6 +268,7 @@ Wayland_VideoInit(_THIS)
     display.current_mode = mode;
     display.driverdata = NULL;
     SDL_AddVideoDisplay(&display);
+    SDL_AddRenderDriver(&display, &GL_RenderDriver);
 
     return 0;
 }
