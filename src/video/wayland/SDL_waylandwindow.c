@@ -30,6 +30,7 @@ int Wayland_CreateWindow(_THIS, SDL_Window * window)
     window->driverdata = data;
 	struct wl_visual *visual;
 	int i;
+	data->waylandData = c;
 	EGLint name, stride, attribs[] = {
 		EGL_WIDTH,	0,
 		EGL_HEIGHT,	0,

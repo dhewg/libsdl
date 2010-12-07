@@ -3,7 +3,7 @@
 #ifndef _SDL_waylandgl_h
 #define _SDL_waylandgl_h
 #include "SDL_waylandwindow.h"
-#include </home/joel/install/include/wayland-client-protocol.h>
+#include <wayland-client-protocol.h>
 
 void Wayland_GL_SwapWindow(_THIS, SDL_Window * window);
 int Wayland_GL_GetSwapInterval(_THIS);

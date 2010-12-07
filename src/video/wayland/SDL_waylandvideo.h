@@ -53,6 +53,8 @@ typedef struct
     
     EGLDisplay edpy;
     GLuint fbo;
+    
+    struct xkb_desc *xkb;
 
     int event_fd;
     int event_mask; 

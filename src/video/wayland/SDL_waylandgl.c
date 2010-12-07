@@ -6,7 +6,7 @@
 
 void Wayland_GL_SwapWindow(_THIS, SDL_Window * window)
 {
-    printf("Wayland_GL_SwapWindow\n");
+    //printf("Wayland_GL_SwapWindow\n");
     SDL_WaylandWindow *data = window->driverdata;
     data->current ^= 1;
 
@@ -52,7 +52,7 @@ Wayland_GL_MakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context)
 				  GL_COLOR_ATTACHMENT0_EXT,
 				  GL_RENDERBUFFER_EXT,
 				  wind->rbo[wind->current]);
-	fprintf(stderr, "framebuffer complete: %d\n",
+	printf("framebuffer complete: %d\n",
 			glCheckFramebufferStatus(GL_FRAMEBUFFER_EXT) == GL_FRAMEBUFFER_COMPLETE);
 
     return 1;
@@ -132,23 +132,6 @@ Wayland_GL_LoadLibrary(_THIS, const char *path)
 
     eglBindAPI(EGL_OPENGL_API);
 
-/*	if (!eglBindAPI(EGL_OPENGL_ES_API)) {
-		fprintf(stderr, "failed to bind EGL_OPENGL_ES_API\n");
-		return -1;
-	}
-
-	data->context = eglCreateContext(data->edpy, NULL,
-					   EGL_NO_CONTEXT, context_attribs);
-	if (data->context == NULL) {
-		fprintf(stderr, "failed to create context\n");
-		return -1;
-	}
-
-	if (!eglMakeCurrent(data->edpy, EGL_NO_SURFACE,
-			    EGL_NO_SURFACE, data->context)) {
-		fprintf(stderr, "failed to make context current\n");
-		return -1;
-	}*/
     return 0;
 }
 

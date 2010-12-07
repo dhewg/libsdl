@@ -82,6 +82,8 @@ Wayland_CreateDevice(int devindex)
     device->VideoInit = Wayland_VideoInit;
     device->VideoQuit = Wayland_VideoQuit;
     device->SetDisplayMode = Wayland_SetDisplayMode;
+    
+    
     device->PumpEvents = Wayland_PumpEvents;
     
     device->GL_SwapWindow = Wayland_GL_SwapWindow;
@@ -159,6 +161,7 @@ static const struct wl_drm_listener drm_listener = {
 };
 
 
+
 static void
 display_handle_global(struct wl_display *display, uint32_t id,
 		      const char *interface, uint32_t version, void *data)
@@ -171,7 +174,7 @@ display_handle_global(struct wl_display *display, uint32_t id,
 		d->output = wl_output_create(display, id);
 		wl_output_add_listener(d->output, &output_listener, d);
 	} else if (strcmp(interface, "input_device") == 0) {
-		//display_add_input(d, id);
+		Wayland_display_add_input(d, id);
 	} else if (strcmp(interface, "shell") == 0) {
 		d->shell = wl_shell_create(display, id);
 		wl_shell_add_listener(d->shell, &shell_listener, d);
@@ -187,7 +190,7 @@ static int update_event_mask(uint32_t mask, void *data)
     SDL_WaylandData *d = data;
 
     d->event_mask = mask;
-    printf("updated event_mask: %d\n", mask);
+    //printf("updated event_mask: %d\n", mask);
 
 #if 0
     if (mask & WL_DISPLAY_READABLE)
@@ -246,6 +249,8 @@ Wayland_VideoInit(_THIS)
 
 
     data->event_fd = wl_display_get_fd(data->display, update_event_mask, data);
+
+	Wayland_init_xkb(data);
 
     SDL_VideoDisplay display;
     SDL_DisplayMode mode;

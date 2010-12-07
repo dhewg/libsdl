@@ -9,6 +9,7 @@
 
 typedef struct
 {
+	SDL_WaylandData *waylandData;
     struct wl_surface	*surface;
     struct wl_buffer	*buffer[2];
 
@@ -16,6 +17,8 @@ typedef struct
     GLuint          rbo[2];
     uint32_t        fb_id[2];
     uint32_t        current;
+    
+    struct SDL_WaylandInput *keyboard_device;
 
     EGLContext context;
 
