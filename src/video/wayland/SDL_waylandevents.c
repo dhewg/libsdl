@@ -94,7 +94,7 @@ window_handle_motion(void *data, struct wl_input_device *input_device,
 	input->y = y;
 	input->sx = sx;
 	input->sy = sy;
-	SDL_SendMouseMotion(window->sdlwindow, 0, x, y);
+	SDL_SendMouseMotion(window->sdlwindow, 0, sx, sy);
 	//location = get_pointer_location(window, input->sx, input->sy);
 
 	//set_pointer_image(input, time, pointer);
