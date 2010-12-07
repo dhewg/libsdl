@@ -28,6 +28,8 @@
 #include "SDL_waylandevents_c.h"
 #include "SDL_waylandwindow.h"
 #include <X11/extensions/XKBcommon.h>
+#include <errno.h>
+#include <sys/select.h>
 
 
 const char *option_xkb_layout = "us";
@@ -55,9 +57,28 @@ Wayland_init_xkb(SDL_WaylandData *d)
 void
 Wayland_PumpEvents(_THIS)
 {
-	SDL_WaylandData *d = _this->driverdata;
-	wl_display_iterate(d->display, WL_DISPLAY_READABLE);
-	/* actually get the events... */
+    SDL_WaylandData *d = _this->driverdata;
+    struct timeval tv;
+    fd_set rfds;
+    int retval;
+
+    if (!(d->event_mask & WL_DISPLAY_READABLE))
+        return;
+
+    tv.tv_sec  = 0;
+    tv.tv_usec = 0;
+    do {
+        FD_ZERO(&rfds);
+        FD_SET(d->event_fd, &rfds);
+
+        retval = select(d->event_fd + 1, &rfds, NULL, NULL, &tv);
+        if (retval < 0) {
+            fprintf(stderr, "select: %s\n", strerror(errno));
+            break;
+        }
+        if (retval == 1)
+            wl_display_iterate(d->display, WL_DISPLAY_READABLE);
+    } while (retval > 0);
 }
 
 static void
