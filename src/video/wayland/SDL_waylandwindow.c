@@ -89,10 +89,18 @@ extern void Wayland_DestroyWindow(_THIS, SDL_Window * window)
 {
 	SDL_WaylandWindow *data = (SDL_WaylandWindow*) window->driverdata;
 	SDL_WaylandData *d;
-        window->driverdata = NULL;
+	window->driverdata = NULL;
+	int i;
 
 	if (data) {
 		d = data->waylandData;
+
+		glDeleteRenderbuffers(2, data->rbo);
+		for (i = 0; i < 2; ++i) {
+			wl_buffer_destroy(data->buffer[i]);
+			eglDestroyImageKHR(d->edpy, data->image[i]);
+		}
+
 		wl_surface_destroy(data->surface);
 	}
 	SDL_free(data);
