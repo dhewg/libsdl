@@ -179,7 +179,7 @@ Wayland_GL_CreateContext(_THIS, SDL_Window * window)
     Wayland_GL_MakeCurrent(_this, window, NULL);
     //data->egl_active = 1;
 
-    return 1;
+    return wind->context;
 }
 
 int
