@@ -9,6 +9,7 @@
 
 typedef struct
 {
+	SDL_Window *sdlwindow;
 	SDL_WaylandData *waylandData;
     struct wl_surface	*surface;
     struct wl_buffer	*buffer[2];

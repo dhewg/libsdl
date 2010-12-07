@@ -1008,7 +1008,7 @@ AC_HELP_STRING([--enable-video-wayland], [use Wayland video driver [[default=yes
         if test x$enable_video = xyes -a x$enable_video_wayland = xyes; then          
             AC_DEFINE(SDL_VIDEO_DRIVER_WAYLAND)
             SOURCES="$SOURCES $srcdir/src/video/wayland/*.c"
-            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L/home/joel/install/lib -lwayland-client -ldrm -lEGL -lcairo"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L/home/joel/install/lib -lwayland-client -ldrm -lEGL -lGL -lxkbcommon"
         fi
 }
 

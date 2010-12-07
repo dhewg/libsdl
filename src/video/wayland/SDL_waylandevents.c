@@ -55,6 +55,8 @@ Wayland_init_xkb(SDL_WaylandData *d)
 void
 Wayland_PumpEvents(_THIS)
 {
+	SDL_WaylandData *d = _this->driverdata;
+	wl_display_iterate(d->display, WL_DISPLAY_READABLE);
 	/* actually get the events... */
 }
 
@@ -71,7 +73,7 @@ window_handle_motion(void *data, struct wl_input_device *input_device,
 	input->y = y;
 	input->sx = sx;
 	input->sy = sy;
-
+	SDL_SendMouseMotion(window->sdlwindow, 0, x, y);
 	//location = get_pointer_location(window, input->sx, input->sy);
 
 	//set_pointer_image(input, time, pointer);
@@ -84,7 +86,10 @@ window_handle_button(void *data,
 {
 	struct SDL_WaylandInput *input = data;
 	SDL_WaylandWindow *window = input->pointer_focus;
-	printf("Button pressed\n");
+	
+	/* The state and button might need to be changed for sdl */
+	SDL_SendMouseButton(window->sdlwindow, state, button);
+	
 }
 
 static void
@@ -95,7 +100,7 @@ window_handle_key(void *data, struct wl_input_device *input_device,
 	SDL_WaylandWindow *window = input->keyboard_focus;
 	SDL_WaylandData *d = window->waylandData;
 	uint32_t code, sym, level;
-
+	
 	code = key + d->xkb->min_key_code;
 	if (window->keyboard_device != input)
 		return;
@@ -106,6 +111,8 @@ window_handle_key(void *data, struct wl_input_device *input_device,
 		level = 1;
 */
 	sym = XkbKeySymEntry(d->xkb, code, level, 0);
+	printf("Button pressed2 %d %d %d\n", key, sym, SDL_GetScancodeFromKey(key));
+	//SDL_SendKeyboardKey(state, SDL_scancode scancode);
 
 	if (state)
 		input->modifiers |= d->xkb->map->modmap[code];
@@ -127,7 +134,7 @@ window_handle_pointer_focus(void *data,
 	if (surface) {
 		input->pointer_focus = wl_surface_get_user_data(surface);
 		window = input->pointer_focus;
-
+		SDL_SetMouseFocus(window->sdlwindow);
 		/*pointer = POINTER_LEFT_PTR;
 
 		set_pointer_image(input, time, pointer);*/
@@ -163,8 +170,10 @@ window_handle_keyboard_focus(void *data,
 		input->modifiers |= d->xkb->map->modmap[*k];
 
 	window = input->keyboard_focus;
-	if (window)
+	if (window){
 		window->keyboard_device = input;
+		SDL_SetKeyboardFocus(window->sdlwindow);
+	}
 
 }
 
@@ -180,7 +189,7 @@ void
 Wayland_display_add_input(SDL_WaylandData *d, uint32_t id)
 {
 	struct SDL_WaylandInput *input;
-	printf("Add input device\n");
+	
 	input = malloc(sizeof *input);
 	if (input == NULL)
 		return;
@@ -194,6 +203,7 @@ Wayland_display_add_input(SDL_WaylandData *d, uint32_t id)
 	wl_input_device_add_listener(input->input_device,
 				     &input_device_listener, input);
 	wl_input_device_set_user_data(input->input_device, input);
+	printf("Add input device\n");
 }
 
 /* vi: set ts=4 sw=4 expandtab: */
