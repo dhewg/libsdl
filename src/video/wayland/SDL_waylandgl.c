@@ -36,11 +36,19 @@ Wayland_GL_MakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context)
         return -1;
     }
 
-	glGenFramebuffers(1, &data->fbo);
+    if (!data->fbo_generated) {
+    	glGenFramebuffers(1, &data->fbo);
+        data->fbo_generated = 1;
+    }
 	glBindFramebuffer(GL_FRAMEBUFFER_EXT, data->fbo);
 
-    glGenRenderbuffers(1, &wind->depth_rbo);
-	glBindRenderbuffer(GL_RENDERBUFFER_EXT, wind->depth_rbo);
+    if (!wind->rbos_generated) {
+        glGenRenderbuffers(1, &wind->depth_rbo);
+        glGenRenderbuffers(2, wind->color_rbo);
+        wind->rbos_generated = 1;
+    }
+
+    glBindRenderbuffer(GL_RENDERBUFFER_EXT, wind->depth_rbo);
 	glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER_EXT,
                               GL_DEPTH_ATTACHMENT_EXT,
                               GL_RENDERBUFFER_EXT,
@@ -49,22 +57,24 @@ Wayland_GL_MakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context)
                           GL_DEPTH_COMPONENT,
                           wind->sdlwindow->w, wind->sdlwindow->h);
 
-	glGenRenderbuffers(2, wind->color_rbo);
-	for (i = 0; i < 2; ++i) {
-		glBindRenderbuffer(GL_RENDERBUFFER_EXT, wind->color_rbo[i]);
-		glEGLImageTargetRenderbufferStorageOES(GL_RENDERBUFFER_EXT,
-						       wind->image[i]);
-	}
+    for (i = 0; i < 2; ++i) {
+        glBindRenderbuffer(GL_RENDERBUFFER_EXT, wind->color_rbo[i]);
+        glEGLImageTargetRenderbufferStorageOES(GL_RENDERBUFFER_EXT,
+                               wind->image[i]);
+    }
 
 	wind->current = 0;
 	glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER_EXT,
 				  GL_COLOR_ATTACHMENT0_EXT,
 				  GL_RENDERBUFFER_EXT,
 				  wind->color_rbo[wind->current]);
-	printf("framebuffer complete: %d\n",
-			glCheckFramebufferStatus(GL_FRAMEBUFFER_EXT) == GL_FRAMEBUFFER_COMPLETE);
 
-    return 1;
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER_EXT) != GL_FRAMEBUFFER_COMPLETE) {
+        SDL_SetError("Framebuffer Incomplete.");
+        return -1;
+    }
+
+    return 0;
 }
 
 int
@@ -140,6 +150,8 @@ Wayland_GL_LoadLibrary(_THIS, const char *path)
     }
 
     eglBindAPI(EGL_OPENGL_API);
+
+    data->fbo_generated = 0;
 
     return 0;
 }

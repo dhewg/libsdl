@@ -17,6 +17,7 @@ typedef struct
     EGLImageKHR     image[2];
     GLuint          color_rbo[2];
     GLuint          depth_rbo;
+    uint8_t         rbos_generated;
     uint32_t        current;
     
     struct SDL_WaylandInput *keyboard_device;

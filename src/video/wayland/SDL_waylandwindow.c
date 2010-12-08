@@ -80,6 +80,7 @@ int Wayland_CreateWindow(_THIS, SDL_Window * window)
 					     stride, visual);
 	}
 	data->current = 0;
+	data->rbos_generated = 0;
 
 
     return 0;
@@ -95,8 +96,11 @@ void Wayland_DestroyWindow(_THIS, SDL_Window * window)
 	if (data) {
 		d = data->waylandData;
 
-		glDeleteRenderbuffers(1, &data->depth_rbo);
-		glDeleteRenderbuffers(2, data->color_rbo);
+		if (data->rbos_generated) {
+			glDeleteRenderbuffers(1, &data->depth_rbo);
+			glDeleteRenderbuffers(2, data->color_rbo);
+			data->rbos_generated = 0;
+		}
 		for (i = 0; i < 2; ++i) {
 			wl_buffer_destroy(data->buffer[i]);
 			eglDestroyImageKHR(d->edpy, data->image[i]);
