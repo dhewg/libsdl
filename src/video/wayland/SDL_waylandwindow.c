@@ -8,10 +8,7 @@
 void Wayland_ShowWindow(_THIS, SDL_Window * window)
 {
 	SDL_WaylandWindow *data = (SDL_WaylandWindow*) window->driverdata;
-	glFlush();
 
-	wl_surface_attach(data->surface,
-			  data->buffer[data->current]);
 	wl_surface_map(data->surface,
 		       window->x, window->y,
 		       window->w, window->h);
