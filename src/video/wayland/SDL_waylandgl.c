@@ -135,10 +135,8 @@ void Wayland_GL_SwapWindow(_THIS, SDL_Window * window)
     glClearColor(clear_color[0], clear_color[1],
                  clear_color[2], clear_color[3]);
 
-    wl_surface_attach(data->surface,
-              data->buffer[data->current ^ 1]);
-    wl_surface_damage(data->surface, window->x, window->y,
-                  window->w, window->h);
+    wl_surface_attach(data->surface, data->buffer[data->current ^ 1]);
+    wl_surface_damage(data->surface, 0, 0, window->w, window->h);
 }
 
 int
