@@ -1,8 +1,29 @@
+/*
+    SDL - Simple DirectMedia Layer
+    Copyright (C) 1997-2010 Sam Lantinga
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+    Sam Lantinga
+    slouken@libsdl.org
+*/
 #include "SDL_config.h"
 
 #include "SDL_waylandgl.h"
 #include "SDL_waylandwindow.h"
-
+#include <dlfcn.h>
 
 /*
  * FIXME: Either extend the wayland protocol with a flipped attribute for a
@@ -113,7 +134,6 @@ void flip_egl_image(_THIS, SDL_Window * _window)
 
 void Wayland_GL_SwapWindow(_THIS, SDL_Window * window)
 {
-    //printf("Wayland_GL_SwapWindow\n");
     SDL_WaylandWindow *data = window->driverdata;
 
     glFlush();
@@ -142,7 +162,6 @@ void Wayland_GL_SwapWindow(_THIS, SDL_Window * window)
 int
 Wayland_GL_MakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context)
 {
-    printf("Wayland_GL_MakeCurrent\n");
     SDL_WaylandData *data = _this->driverdata;
     SDL_WaylandWindow *wind = (SDL_WaylandWindow *) window->driverdata;
     int i;
@@ -197,72 +216,20 @@ Wayland_GL_MakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context)
 int
 Wayland_GL_LoadLibrary(_THIS, const char *path)
 {
-/* void *handle;
+    void *handle;
     int dlopen_flags;
+    SDL_WaylandData *data = _this->driverdata;
 
-    SDL_VideoData *data = (SDL_VideoData *) _this->driverdata;
 
-    if (_this->gles_data->egl_active) {
-        SDL_SetError("OpenGL ES context already created");
-        return -1;
-    }
-#ifdef RTLD_GLOBAL
-    dlopen_flags = RTLD_LAZY | RTLD_GLOBAL;
-#else
-    dlopen_flags = RTLD_LAZY;
-#endif
-    handle = dlopen(path, dlopen_flags);
-    /* Catch the case where the application isn't linked with EGL *//*
-    if ((dlsym(handle, "eglChooseConfig") == NULL) && (path == NULL)) {
-
-        dlclose(handle);
-        path = getenv("SDL_VIDEO_GL_DRIVER");
-        if (path == NULL) {
-            path = DEFAULT_OPENGL;
-        }
-        handle = dlopen(path, dlopen_flags);
-    }
-
-    if (handle == NULL) {
-        SDL_SetError("Could not load OpenGL ES/EGL library");
-        return -1;
-    }
-
-    /* Unload the old driver and reset the pointers *//*
+    /* Unload the old driver and reset the pointers */
     Wayland_GL_UnloadLibrary(_this);
 
-
-
-    _this->gles_data->egl_display =
-        _this->gles_data->eglGetDisplay((NativeDisplayType) data->display);
-
-    if (!_this->gles_data->egl_display) {
-        SDL_SetError("Could not get EGL display");
-        return -1;
-    }
-
-    if (eglInitialize(_this->gles_data->egl_display, NULL,
-                      NULL) != EGL_TRUE) {
-        SDL_SetError("Could not initialize EGL");
-        return -1;
-    }
-
-    _this->gl_config.dll_handle = handle;
-    _this->gl_config.driver_loaded = 1;
-
-    if (path) {
-        strncpy(_this->gl_config.driver_path, path,
-                sizeof(_this->gl_config.driver_path) - 1);
-    } else {
-        strcpy(_this->gl_config.driver_path, "");
-    }*/
-    SDL_WaylandData *data = _this->driverdata;
     
     data->edpy = eglGetDRMDisplayMESA(data->drm_fd);
 
     int major, minor;
     if (!eglInitialize(data->edpy, &major, &minor)) {
-        fprintf(stderr, "failed to initialize display\n");
+        SDL_SetError("Failed to initialize display.");
         return -1;
     }
 
@@ -301,25 +268,16 @@ Wayland_GL_GetProcAddress(_THIS, const char *proc)
 void
 Wayland_GL_UnloadLibrary(_THIS)
 {
-    /*if (_this->gl_config.driver_loaded) {
-        _this->gles_data->eglTerminate(_this->gles_data->egl_display);
+    SDL_WaylandData *data = _this->driverdata;
+    if (_this->gl_config.driver_loaded) {
+        eglTerminate(data->edpy);
 
         dlclose(_this->gl_config.dll_handle);
 
-        _this->gles_data->eglGetProcAddress = NULL;
-        _this->gles_data->eglChooseConfig = NULL;
-        _this->gles_data->eglCreateContext = NULL;
-        _this->gles_data->eglCreateWindowSurface = NULL;
-        _this->gles_data->eglDestroyContext = NULL;
-        _this->gles_data->eglDestroySurface = NULL;
-        _this->gles_data->eglMakeCurrent = NULL;
-        _this->gles_data->eglSwapBuffers = NULL;
-        _this->gles_data->eglGetDisplay = NULL;
-        _this->gles_data->eglTerminate = NULL;
 
         _this->gl_config.dll_handle = NULL;
         _this->gl_config.driver_loaded = 0;
-    }*/
+    }
 }
 
 SDL_GLContext
@@ -327,9 +285,6 @@ Wayland_GL_CreateContext(_THIS, SDL_Window * window)
 {
     SDL_WaylandData *data = _this->driverdata;
     SDL_WaylandWindow *wind = (SDL_WaylandWindow *) window->driverdata;
-    //Display *display = data->videodata->display;
-
-    printf("Wayland_GL_CreateContext\n");
 
     wind->context = eglCreateContext(data->edpy, NULL, EGL_NO_CONTEXT, NULL);
 
@@ -340,7 +295,6 @@ Wayland_GL_CreateContext(_THIS, SDL_Window * window)
     }
 
     Wayland_GL_MakeCurrent(_this, window, NULL);
-    //data->egl_active = 1;
 
     return wind->context;
 }

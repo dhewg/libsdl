@@ -120,7 +120,7 @@ window_handle_key(void *data, struct wl_input_device *input_device,
 	struct SDL_WaylandInput *input = data;
 	SDL_WaylandWindow *window = input->keyboard_focus;
 	SDL_WaylandData *d = window->waylandData;
-	uint32_t code, sym, level;
+	uint32_t code, sym, level = 0;
 	
 	code = key + d->xkb->min_key_code;
 	if (window->keyboard_device != input)
@@ -178,7 +178,6 @@ window_handle_keyboard_focus(void *data,
 	SDL_WaylandData *d = input->display;
 	uint32_t *k, *end;
 
-	window = input->keyboard_focus;
 	if (window)
 		window->keyboard_device = NULL;
 
