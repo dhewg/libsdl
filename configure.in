@@ -998,18 +998,30 @@ CheckWarnAll()
     fi
 }
 
-
-dnl Find wayland stuff
+dnl Check for Wayland
 CheckWayland()
 {
-        AC_ARG_ENABLE(video-wayland,
+    AC_ARG_ENABLE(video-wayland,
 AC_HELP_STRING([--enable-video-wayland], [use Wayland video driver [[default=yes]]]),
-                  , enable_video_wayland=yes)
-        if test x$enable_video = xyes -a x$enable_video_wayland = xyes; then          
+                  ,enable_video_wayland=yes)
+    if test x$enable_video = xyes -a x$enable_video_wayland = xyes; then
+        AC_MSG_CHECKING(for Wayland support)
+        video_wayland=no
+        AC_TRY_COMPILE([
+         #include <wayland-client.h>
+         #include <wayland-client-protocol.h>
+        ],[
+        ],[
+        video_wayland=yes
+        ])
+        AC_MSG_RESULT($video_wayland)
+        if test x$video_wayland = xyes; then
             AC_DEFINE(SDL_VIDEO_DRIVER_WAYLAND)
             SOURCES="$SOURCES $srcdir/src/video/wayland/*.c"
-            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L/home/joel/install/lib -lwayland-client -ldrm -lEGL -lGL -lxkbcommon"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lwayland-client -ldrm -lEGL -lGL -lxkbcommon"
+            have_video=yes
         fi
+    fi
 }
 
 dnl Find the X11 include and library directories
