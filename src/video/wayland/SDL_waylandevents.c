@@ -150,7 +150,7 @@ window_handle_pointer_focus(void *data,
 {
 	struct SDL_WaylandInput *input = data;
 	SDL_WaylandWindow *window;
-	int pointer;
+	/*int pointer;*/
 
 	if (surface) {
 		input->pointer_focus = wl_surface_get_user_data(surface);

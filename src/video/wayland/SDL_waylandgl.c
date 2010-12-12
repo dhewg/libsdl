@@ -216,8 +216,6 @@ Wayland_GL_MakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context)
 int
 Wayland_GL_LoadLibrary(_THIS, const char *path)
 {
-    void *handle;
-    int dlopen_flags;
     SDL_WaylandData *data = _this->driverdata;
 
 

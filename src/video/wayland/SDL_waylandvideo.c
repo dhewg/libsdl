@@ -21,7 +21,6 @@
 */
 #include "SDL_config.h"
 
-
 #include <fcntl.h>
 #include "SDL_video.h"
 #include "SDL_mouse.h"
@@ -216,7 +215,7 @@ Wayland_VideoInit(_THIS)
 	
     data->display = wl_display_connect(NULL);
     if (data->display == NULL) {
-	    fprintf(stderr, "failed to create display: %m\n");
+	    SDL_SetError("Failed to connecto to a Wayland display.");
 	    return 0;
     }
     
@@ -231,7 +230,7 @@ Wayland_VideoInit(_THIS)
     data->drm_fd = open (data->device_name, O_RDWR);
     if (data->drm_fd < 0)
     {
-	    fprintf(stderr, "Failed to open drm device\n");
+	    SDL_SetError("Failed to open drm device.");
 
 	    return 0;
     }
@@ -239,7 +238,7 @@ Wayland_VideoInit(_THIS)
     int magic;
     if (drmGetMagic (data->drm_fd, &magic))
     {
-	    fprintf(stderr, "Failed to get drm magic\n");
+	    SDL_SetError("Failed to get drm magic.");
 
 	    return 0;
     }
