@@ -38,27 +38,27 @@ typedef struct
 {
     struct wl_display *display;
     struct wl_compositor *compositor;
-    struct wl_drm *drm;
     struct wl_output *output;
     struct wl_shell *shell;
+    struct wl_drm *drm;
+
+    char *device_name;
     
     struct {
         int32_t x, y, width, height;
     } screen_allocation;
-    
-    char *device_name;
-    int authenticated;
-
-    int drm_fd;
-    
+ 
     EGLDisplay edpy;
-    GLuint fbo;
-    uint8_t fbo_generated;
+    EGLContext context;
+    EGLConfig econf;
     
     struct xkb_desc *xkb;
 
     int event_fd;
     int event_mask; 
+
+    const SDL_scancode *input_table;
+    int input_table_size;
 } SDL_WaylandData;
 
 #endif /* _SDL_nullvideo_h */

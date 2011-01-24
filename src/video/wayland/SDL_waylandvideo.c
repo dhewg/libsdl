@@ -81,8 +81,7 @@ Wayland_CreateDevice(int devindex)
     device->VideoInit = Wayland_VideoInit;
     device->VideoQuit = Wayland_VideoQuit;
     device->SetDisplayMode = Wayland_SetDisplayMode;
-    
-    
+
     device->PumpEvents = Wayland_PumpEvents;
     
     device->GL_SwapWindow = Wayland_GL_SwapWindow;
@@ -132,7 +131,7 @@ static void
 handle_configure(void *data, struct wl_shell *shell,
 		 uint32_t time, uint32_t edges,
 		 struct wl_surface *surface,
-		 int32_t x, int32_t y, int32_t width, int32_t height)
+		 int32_t width, int32_t height)
 {
 
 }
@@ -140,7 +139,6 @@ handle_configure(void *data, struct wl_shell *shell,
 static const struct wl_shell_listener shell_listener = {
 	handle_configure,
 };
-
 
 static void
 drm_handle_device(void *data, struct wl_drm *drm, const char *device)
@@ -154,15 +152,14 @@ static void drm_handle_authenticated(void *data, struct wl_drm *drm)
 {
 	SDL_WaylandData *c = data;
 
-	c->authenticated = 1;
+    fprintf(stderr, "sdl got authenticated\n");
+	//c->authenticated = 1;
 }
 
 static const struct wl_drm_listener drm_listener = {
 	drm_handle_device,
 	drm_handle_authenticated
 };
-
-
 
 static void
 display_handle_global(struct wl_display *display, uint32_t id,
@@ -193,10 +190,6 @@ static int update_event_mask(uint32_t mask, void *data)
 
     d->event_mask = mask;
 
-#if 0
-    if (mask & WL_DISPLAY_READABLE)
-        wl_display_iterate(d->display, WL_DISPLAY_READABLE);
-#endif
     if (mask & WL_DISPLAY_WRITABLE)
         wl_display_iterate(d->display, WL_DISPLAY_WRITABLE);
     
@@ -207,13 +200,18 @@ int
 Wayland_VideoInit(_THIS)
 {
     SDL_WaylandData *data;
+
+    printf("init\n");
+
     data = malloc(sizeof *data);
     if (data == NULL)
 	    return 0;
 
     _this->driverdata = data;
+    printf("pre connect\n");
 	
     data->display = wl_display_connect(NULL);
+    printf("post connect\n");
     if (data->display == NULL) {
 	    SDL_SetError("Failed to connecto to a Wayland display.");
 	    return 0;
@@ -221,33 +219,8 @@ Wayland_VideoInit(_THIS)
     
     wl_display_add_global_listener(data->display,
 			    display_handle_global, data);
-
     wl_display_iterate(data->display, WL_DISPLAY_READABLE);
-
-    /*if (wayland_compositor_init_egl(c) < 0)
-	    return NULL;*/
-	    
-    data->drm_fd = open (data->device_name, O_RDWR);
-    if (data->drm_fd < 0)
-    {
-	    SDL_SetError("Failed to open drm device.");
-
-	    return 0;
-    }
-
-    int magic;
-    if (drmGetMagic (data->drm_fd, &magic))
-    {
-	    SDL_SetError("Failed to get drm magic.");
-
-	    return 0;
-    }
-    wl_drm_authenticate (data->drm, magic);
-
-    wl_display_iterate (data->display, WL_DISPLAY_WRITABLE);
-    while (!data->authenticated)
-	    wl_display_iterate (data->display, WL_DISPLAY_READABLE);
-
+    fprintf(stderr, "after global listener iteration\n");
 
     data->event_fd = wl_display_get_fd(data->display, update_event_mask, data);
 

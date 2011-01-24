@@ -33,18 +33,9 @@ typedef struct
 	SDL_Window *sdlwindow;
 	SDL_WaylandData *waylandData;
     struct wl_surface	*surface;
-    struct wl_buffer	*buffer[2];
-
-    EGLImageKHR     image[2];
-    GLuint          color_rbo[2];
-    GLuint          depth_rbo;
-    uint8_t         rbos_generated;
-    uint32_t        current;
+    EGLSurface esurf;
     
     struct SDL_WaylandInput *keyboard_device;
-
-    EGLContext context;
-
 } SDL_WaylandWindow;
 
 extern void Wayland_ShowWindow(_THIS, SDL_Window * window);

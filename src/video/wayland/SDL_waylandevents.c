@@ -118,8 +118,9 @@ window_handle_button(void *data,
 	struct SDL_WaylandInput *input = data;
 	SDL_WaylandWindow *window = input->pointer_focus;
 	
-	/* The state and button might need to be changed for sdl */
-	SDL_SendMouseButton(window->sdlwindow, state, button);
+	SDL_SendMouseButton(window->sdlwindow,
+                        state ? SDL_PRESSED : SDL_RELEASED,
+                        button);
 	
 }
 
