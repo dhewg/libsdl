@@ -20,6 +20,8 @@
     slouken@libsdl.org
 */
 #include "SDL_config.h"
+#include "SDL_stdinc.h"
+#include "SDL_assert.h"
 
 #include "../../events/SDL_sysevents.h"
 #include "../../events/SDL_events_c.h"
@@ -28,7 +30,12 @@
 #include "SDL_waylandevents_c.h"
 #include "SDL_waylandwindow.h"
 #include <X11/extensions/XKBcommon.h>
+
+#include "../../events/scancodes_xfree86.h"
+#include "../x11/imKStoUCS.h"
+
 #include <errno.h>
+
 #include <sys/select.h>
 
 
@@ -42,7 +49,7 @@ Wayland_init_xkb(SDL_WaylandData *d)
 	struct xkb_rule_names names;
 
 	names.rules = "evdev";
-	names.model = "pc105";
+	names.model = "evdev";
 	names.layout = option_xkb_layout;
 	names.variant = option_xkb_variant;
 	names.options = option_xkb_options;
@@ -52,6 +59,9 @@ Wayland_init_xkb(SDL_WaylandData *d)
 		fprintf(stderr, "Failed to compile keymap\n");
 		exit(1);
 	}
+
+    d->input_table = xfree86_scancode_table2;
+    d->input_table_size = SDL_arraysize(xfree86_scancode_table2);
 }
 
 void
@@ -113,6 +123,23 @@ window_handle_button(void *data,
 	
 }
 
+static char *
+keysym_to_utf8(uint32_t sym)
+{
+    char *text = NULL;
+    uint32_t inbuf[2];
+    unsigned ucs4;
+    
+    inbuf[0] = X11_KeySymToUcs4(sym);
+    if (inbuf[0] == 0)
+        return NULL;
+    inbuf[1] = 0;
+
+    text = SDL_iconv_string("UTF-8", "UCS-4", (const char *) inbuf, sizeof inbuf);
+
+    return text;
+}
+
 static void
 window_handle_key(void *data, struct wl_input_device *input_device,
 		  uint32_t time, uint32_t key, uint32_t state)
@@ -121,25 +148,34 @@ window_handle_key(void *data, struct wl_input_device *input_device,
 	SDL_WaylandWindow *window = input->keyboard_focus;
 	SDL_WaylandData *d = window->waylandData;
 	uint32_t code, sym, level = 0;
+    char *text;
 	
 	code = key + d->xkb->min_key_code;
 	if (window->keyboard_device != input)
 		return;
 
-/*	level = 0;
-	if (input->modifiers & WINDOW_MODIFIER_SHIFT &&
-	    XkbKeyGroupWidth(d->xkb, code, 0) > 1)
-		level = 1;
-*/
+    SDL_assert(key < d->input_table_size);
+    SDL_SendKeyboardKey(state ? SDL_PRESSED:SDL_RELEASED, d->input_table[key]);
+    
+    level = 0;
+    if (input->modifiers & XKB_COMMON_SHIFT_MASK &&
+            XkbKeyGroupWidth(d->xkb, code, 0) > 1)
+        level = 1;
+
 	sym = XkbKeySymEntry(d->xkb, code, level, 0);
-	printf("Button pressed2 %d %d %d\n", key, sym, SDL_GetScancodeFromKey(key));
-	//SDL_SendKeyboardKey(state, SDL_scancode scancode);
+    
+     if (state) {
+         text = keysym_to_utf8(sym);
+         if (text != NULL) {
+             SDL_SendKeyboardText(text);
+             SDL_free(text);
+         }
+     }
 
 	if (state)
 		input->modifiers |= d->xkb->map->modmap[code];
 	else
 		input->modifiers &= ~d->xkb->map->modmap[code];
-
 }
 
 static void
