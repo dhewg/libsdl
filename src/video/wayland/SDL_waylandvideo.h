@@ -27,6 +27,7 @@
 #include "../SDL_sysvideo.h"
 #include <wayland-client.h>
 #include <wayland-client-protocol.h>
+#include <wayland-egl.h>
 #define GL_GLEXT_PROTOTYPES
 #define EGL_EGLEXT_PROTOTYPES
 #include <EGL/egl.h>
@@ -37,13 +38,11 @@
 typedef struct
 {
     struct wl_display *display;
+    struct wl_egl_display *egl_display;
     struct wl_compositor *compositor;
     struct wl_output *output;
     struct wl_shell *shell;
-    struct wl_drm *drm;
 
-    char *device_name;
-    
     struct {
         int32_t x, y, width, height;
     } screen_allocation;

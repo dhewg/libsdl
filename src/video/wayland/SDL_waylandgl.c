@@ -60,18 +60,9 @@ Wayland_GL_LoadLibrary(_THIS, const char *path)
 		EGL_NONE
 	};
 
-	struct {
-        struct wl_display *display;
-		struct wl_drm *drm;
-		char *device;
-	} egl_native_display = {
-        data->display,
-		data->drm,
-		data->device_name
-	};
     fprintf(stderr, "start laod library\n");
 
-    data->edpy = eglGetDisplay((EGLNativeDisplayType) &egl_native_display);
+    data->edpy = eglGetDisplay((EGLNativeDisplayType) data->egl_display);
 
     fprintf(stderr, "after get dispaly\n");
     if (!eglInitialize(data->edpy, &major, &minor)) {

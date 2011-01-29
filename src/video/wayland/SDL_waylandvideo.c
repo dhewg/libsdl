@@ -141,27 +141,6 @@ static const struct wl_shell_listener shell_listener = {
 };
 
 static void
-drm_handle_device(void *data, struct wl_drm *drm, const char *device)
-{
-	SDL_WaylandData *c = data;
-
-	c->device_name = strdup(device);
-}
-
-static void drm_handle_authenticated(void *data, struct wl_drm *drm)
-{
-	SDL_WaylandData *c = data;
-
-    fprintf(stderr, "sdl got authenticated\n");
-	//c->authenticated = 1;
-}
-
-static const struct wl_drm_listener drm_listener = {
-	drm_handle_device,
-	drm_handle_authenticated
-};
-
-static void
 display_handle_global(struct wl_display *display, uint32_t id,
 		      const char *interface, uint32_t version, void *data)
 {
@@ -177,9 +156,6 @@ display_handle_global(struct wl_display *display, uint32_t id,
 	} else if (strcmp(interface, "shell") == 0) {
 		d->shell = wl_shell_create(display, id);
 		wl_shell_add_listener(d->shell, &shell_listener, d);
-	} else if (strcmp(interface, "drm") == 0) {
-		d->drm = wl_drm_create(display, id);
-		wl_drm_add_listener(d->drm, &drm_listener, d);
 	}
 }
 
@@ -216,6 +192,7 @@ Wayland_VideoInit(_THIS)
 	    SDL_SetError("Failed to connecto to a Wayland display.");
 	    return 0;
     }
+    data->egl_display = wl_egl_create_native_display(data->display);
     
     wl_display_add_global_listener(data->display,
 			    display_handle_global, data);

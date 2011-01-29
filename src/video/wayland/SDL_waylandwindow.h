@@ -33,6 +33,7 @@ typedef struct
 	SDL_Window *sdlwindow;
 	SDL_WaylandData *waylandData;
     struct wl_surface	*surface;
+    struct wl_egl_surface *egl_surface;
     EGLSurface esurf;
     
     struct SDL_WaylandInput *keyboard_device;
