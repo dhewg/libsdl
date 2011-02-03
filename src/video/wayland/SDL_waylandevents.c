@@ -39,8 +39,8 @@
 #include <sys/select.h>
 
 
-const char *option_xkb_layout = "us";
-const char *option_xkb_variant = "";
+const char *option_xkb_layout = "de";
+const char *option_xkb_variant = "nodeadkeys";
 const char *option_xkb_options = "";
 
 void
