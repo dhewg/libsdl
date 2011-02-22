@@ -73,14 +73,12 @@ int Wayland_CreateWindow(_THIS, SDL_Window * window)
 		wl_compositor_create_surface(c->compositor);
 	wl_surface_set_user_data(data->surface, data);
 
-    visual = wl_display_get_premultiplied_argb_visual(c->display);
-    data->egl_window = wl_egl_native_window_create(data->surface,
-		    				   window->w,
-						   window->h,
-						   visual);
+    visual = wl_display_get_rgb_visual(c->display);
+    data->egl_window = wl_egl_window_create(c->egl_display, data->surface,
+		    			    window->w, window->h, visual);
     data->esurf =
-        eglCreateWindowSurface(c->edpy, c->econf, 
-                (EGLNativeWindowType) data->egl_window, NULL);
+        eglCreateWindowSurface(c->edpy, c->econf,
+			       data->egl_window, NULL);
 
     if (data->esurf == EGL_NO_SURFACE) {
 	    fprintf(stderr, "failed to create window surface\n");
@@ -101,7 +99,7 @@ void Wayland_DestroyWindow(_THIS, SDL_Window * window)
 
 	if (data) {
 		eglDestroySurface(data->edpy, wind->esurf);
-		wl_egl_native_window_destroy(wind->egl_window);
+		wl_egl_window_destroy(wind->egl_window);
 		wl_surface_destroy(wind->surface);
 		SDL_free(wind);
 	}

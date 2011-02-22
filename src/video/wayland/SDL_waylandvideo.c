@@ -192,7 +192,7 @@ Wayland_VideoInit(_THIS)
 	    SDL_SetError("Failed to connecto to a Wayland display.");
 	    return 0;
     }
-    data->egl_display = wl_egl_native_display_create(data->display);
+    data->egl_display = wl_egl_display_create(data->display);
     
     wl_display_add_global_listener(data->display,
 			    display_handle_global, data);

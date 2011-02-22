@@ -62,7 +62,7 @@ Wayland_GL_LoadLibrary(_THIS, const char *path)
 
     fprintf(stderr, "start laod library\n");
 
-    data->edpy = eglGetDisplay((EGLNativeDisplayType) data->egl_display);
+    data->edpy = eglGetDisplay(data->egl_display);
 
     fprintf(stderr, "after get dispaly\n");
     if (!eglInitialize(data->edpy, &major, &minor)) {

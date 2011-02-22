@@ -28,10 +28,8 @@
 #include <wayland-client.h>
 #include <wayland-client-protocol.h>
 #include <wayland-egl.h>
-#define GL_GLEXT_PROTOTYPES
-#define EGL_EGLEXT_PROTOTYPES
+
 #include <EGL/egl.h>
-#include <EGL/eglext.h>
 #include <GL/gl.h>
 
 

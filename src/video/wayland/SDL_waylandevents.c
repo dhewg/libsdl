@@ -32,6 +32,8 @@
 #include <X11/extensions/XKBcommon.h>
 
 #include "../../events/scancodes_xfree86.h"
+
+typedef uint32_t KeySym;
 #include "../x11/imKStoUCS.h"
 
 #include <errno.h>
@@ -117,7 +119,7 @@ window_handle_button(void *data,
 {
 	struct SDL_WaylandInput *input = data;
 	SDL_WaylandWindow *window = input->pointer_focus;
-	
+
 	SDL_SendMouseButton(window->sdlwindow,
                         state ? SDL_PRESSED : SDL_RELEASED,
                         button);
