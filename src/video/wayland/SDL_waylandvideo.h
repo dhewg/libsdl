@@ -19,6 +19,7 @@
     Sam Lantinga
     slouken@libsdl.org
 */
+
 #include "SDL_config.h"
 
 #ifndef _SDL_waylandvideo_h
@@ -44,11 +45,11 @@ typedef struct
     struct {
         int32_t x, y, width, height;
     } screen_allocation;
- 
+
     EGLDisplay edpy;
     EGLContext context;
     EGLConfig econf;
-    
+
     struct xkb_desc *xkb;
 
     int event_fd;

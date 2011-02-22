@@ -19,6 +19,7 @@
     Sam Lantinga
     slouken@libsdl.org
 */
+
 #include "SDL_config.h"
 
 #include <fcntl.h>
@@ -83,7 +84,7 @@ Wayland_CreateDevice(int devindex)
     device->SetDisplayMode = Wayland_SetDisplayMode;
 
     device->PumpEvents = Wayland_PumpEvents;
-    
+
     device->GL_SwapWindow = Wayland_GL_SwapWindow;
     device->GL_GetSwapInterval = Wayland_GL_GetSwapInterval;
     device->GL_SetSwapInterval = Wayland_GL_SetSwapInterval;
@@ -92,7 +93,7 @@ Wayland_CreateDevice(int devindex)
     device->GL_LoadLibrary = Wayland_GL_LoadLibrary;
     device->GL_UnloadLibrary = Wayland_GL_UnloadLibrary;
     device->GL_GetProcAddress = Wayland_GL_GetProcAddress;
-    
+
 
     device->CreateWindow = Wayland_CreateWindow;
     device->ShowWindow = Wayland_ShowWindow;
@@ -110,9 +111,9 @@ VideoBootStrap Wayland_bootstrap = {
 
 static void
 display_handle_geometry(void *data,
-			struct wl_output *output,
-			int32_t x, int32_t y,
-			int32_t width, int32_t height)
+                        struct wl_output *output,
+                        int32_t x, int32_t y,
+                        int32_t width, int32_t height)
 {
     SDL_WaylandData *d = data;
 
@@ -124,39 +125,39 @@ display_handle_geometry(void *data,
 
 
 static const struct wl_output_listener output_listener = {
-	display_handle_geometry,
+    display_handle_geometry,
 };
 
 static void
 handle_configure(void *data, struct wl_shell *shell,
-		 uint32_t time, uint32_t edges,
-		 struct wl_surface *surface,
-		 int32_t width, int32_t height)
+                 uint32_t time, uint32_t edges,
+                 struct wl_surface *surface,
+                 int32_t width, int32_t height)
 {
 
 }
 
 static const struct wl_shell_listener shell_listener = {
-	handle_configure,
+    handle_configure,
 };
 
 static void
 display_handle_global(struct wl_display *display, uint32_t id,
-		      const char *interface, uint32_t version, void *data)
+                      const char *interface, uint32_t version, void *data)
 {
-	SDL_WaylandData *d = data;
+    SDL_WaylandData *d = data;
 
-	if (strcmp(interface, "compositor") == 0) {
-		d->compositor = wl_compositor_create(display, id);
-	} else if (strcmp(interface, "output") == 0) {
-		d->output = wl_output_create(display, id);
-		wl_output_add_listener(d->output, &output_listener, d);
-	} else if (strcmp(interface, "input_device") == 0) {
-		Wayland_display_add_input(d, id);
-	} else if (strcmp(interface, "shell") == 0) {
-		d->shell = wl_shell_create(display, id);
-		wl_shell_add_listener(d->shell, &shell_listener, d);
-	}
+    if (strcmp(interface, "compositor") == 0) {
+        d->compositor = wl_compositor_create(display, id);
+    } else if (strcmp(interface, "output") == 0) {
+        d->output = wl_output_create(display, id);
+        wl_output_add_listener(d->output, &output_listener, d);
+    } else if (strcmp(interface, "input_device") == 0) {
+        Wayland_display_add_input(d, id);
+    } else if (strcmp(interface, "shell") == 0) {
+        d->shell = wl_shell_create(display, id);
+        wl_shell_add_listener(d->shell, &shell_listener, d);
+    }
 }
 
 
@@ -168,7 +169,7 @@ static int update_event_mask(uint32_t mask, void *data)
 
     if (mask & WL_DISPLAY_WRITABLE)
         wl_display_iterate(d->display, WL_DISPLAY_WRITABLE);
-    
+
     return 0;
 }
 
@@ -181,28 +182,28 @@ Wayland_VideoInit(_THIS)
 
     data = malloc(sizeof *data);
     if (data == NULL)
-	    return 0;
+        return 0;
 
     _this->driverdata = data;
     printf("pre connect\n");
-	
+
     data->display = wl_display_connect(NULL);
     printf("post connect\n");
     if (data->display == NULL) {
-	    SDL_SetError("Failed to connecto to a Wayland display.");
-	    return 0;
+        SDL_SetError("Failed to connecto to a Wayland display.");
+        return 0;
     }
     data->egl_display = wl_egl_display_create(data->display);
-    
+
     wl_display_add_global_listener(data->display,
-			    display_handle_global, data);
+                                   display_handle_global, data);
 
     wl_display_iterate(data->display, WL_DISPLAY_READABLE);
     fprintf(stderr, "after global listener iteration\n");
 
     data->event_fd = wl_display_get_fd(data->display, update_event_mask, data);
 
-	Wayland_init_xkb(data);
+    Wayland_init_xkb(data);
 
     SDL_VideoDisplay display;
     SDL_DisplayMode mode;

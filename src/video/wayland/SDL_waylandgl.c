@@ -19,6 +19,7 @@
     Sam Lantinga
     slouken@libsdl.org
 */
+
 #include "SDL_config.h"
 
 #include "SDL_waylandgl.h"
@@ -49,16 +50,16 @@ Wayland_GL_LoadLibrary(_THIS, const char *path)
     /* FIXME: dlopen the library here? */
     SDL_WaylandData *data = _this->driverdata;
     int major, minor;
-	EGLint num_config;
-	EGLint config_attribs[] = {
-		EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-		EGL_RED_SIZE, 1,
-		EGL_GREEN_SIZE, 1,
-		EGL_BLUE_SIZE, 1,
-		EGL_DEPTH_SIZE, 1,
-		EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
-		EGL_NONE
-	};
+    EGLint num_config;
+    EGLint config_attribs[] = {
+        EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+        EGL_RED_SIZE, 1,
+        EGL_GREEN_SIZE, 1,
+        EGL_BLUE_SIZE, 1,
+        EGL_DEPTH_SIZE, 1,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
+        EGL_NONE
+    };
 
     fprintf(stderr, "start laod library\n");
 
@@ -73,8 +74,8 @@ Wayland_GL_LoadLibrary(_THIS, const char *path)
 
     eglBindAPI(EGL_OPENGL_API);
 
-   	if (!eglChooseConfig(data->edpy, config_attribs,
-				 &data->econf, 1, &num_config)) {
+    if (!eglChooseConfig(data->edpy, config_attribs,
+                         &data->econf, 1, &num_config)) {
         fprintf(stderr, "failed to choose config\n");
         return -1;
     }
@@ -97,10 +98,10 @@ Wayland_GL_GetProcAddress(_THIS, const char *proc)
     void *retval;
 
     handle = _this->gl_config.dll_handle;
-	retval = eglGetProcAddress(proc);
-	if (retval) {
-		return retval;
-	}
+    retval = eglGetProcAddress(proc);
+    if (retval) {
+        return retval;
+    }
 
 #if defined(__OpenBSD__) && !defined(__ELF__)
 #undef dlsym(x,y);
@@ -118,10 +119,10 @@ void
 Wayland_GL_UnloadLibrary(_THIS)
 {
     SDL_WaylandData *data = _this->driverdata;
-    
+
     if (_this->gl_config.driver_loaded) {
         eglTerminate(data->edpy);
-        
+
         dlclose(_this->gl_config.dll_handle);
 
         _this->gl_config.dll_handle = NULL;
@@ -176,6 +177,5 @@ Wayland_GL_GetSwapInterval(_THIS)
 {
     return 0;
 }
-
 
 /* vi: set ts=4 sw=4 expandtab: */

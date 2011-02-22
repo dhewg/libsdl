@@ -19,6 +19,7 @@
     Sam Lantinga
     slouken@libsdl.org
 */
+
 #include "SDL_config.h"
 
 #include "../SDL_sysvideo.h"
@@ -28,61 +29,60 @@
 
 void Wayland_ShowWindow(_THIS, SDL_Window * window)
 {
-	SDL_WaylandWindow *wind = (SDL_WaylandWindow*) window->driverdata;
+    SDL_WaylandWindow *wind = (SDL_WaylandWindow*) window->driverdata;
 
-	wl_surface_map_toplevel(wind->surface);
-	/*
-	wl_surface_map(wind->surface,
-		       window->x, window->y,
-		       window->w, window->h);
-		       */
+    wl_surface_map_toplevel(wind->surface);
+    /*
+       wl_surface_map(wind->surface,
+       window->x, window->y,
+       window->w, window->h);
+       */
 }
 
 
 int Wayland_CreateWindow(_THIS, SDL_Window * window)
 {
-
     SDL_WaylandWindow *data;
     struct wl_visual *visual;
-	int i;
-	SDL_WaylandData *c;
+    int i;
+    SDL_WaylandData *c;
 
-	data = malloc(sizeof *data);
-	if (data == NULL)
-		return 0;
-    
+    data = malloc(sizeof *data);
+    if (data == NULL)
+        return 0;
+
     c = _this->driverdata;
     window->driverdata = data;
-    
+
     if (!(window->flags & SDL_WINDOW_OPENGL)) {
         SDL_GL_LoadLibrary(NULL);
         window->flags &= SDL_WINDOW_OPENGL;
     }
 
-	if (window->x == SDL_WINDOWPOS_UNDEFINED) {
-		window->x = 0;
-	}
-	if (window->y == SDL_WINDOWPOS_UNDEFINED) {
-		window->y = 0;
-	}
-	
-	data->waylandData = c;
-	data->sdlwindow = window;
-    
-	data->surface =
-		wl_compositor_create_surface(c->compositor);
-	wl_surface_set_user_data(data->surface, data);
+    if (window->x == SDL_WINDOWPOS_UNDEFINED) {
+        window->x = 0;
+    }
+    if (window->y == SDL_WINDOWPOS_UNDEFINED) {
+        window->y = 0;
+    }
+
+    data->waylandData = c;
+    data->sdlwindow = window;
+
+    data->surface =
+        wl_compositor_create_surface(c->compositor);
+    wl_surface_set_user_data(data->surface, data);
 
     visual = wl_display_get_rgb_visual(c->display);
     data->egl_window = wl_egl_window_create(c->egl_display, data->surface,
-		    			    window->w, window->h, visual);
+                                            window->w, window->h, visual);
     data->esurf =
         eglCreateWindowSurface(c->edpy, c->econf,
-			       data->egl_window, NULL);
+                               data->egl_window, NULL);
 
     if (data->esurf == EGL_NO_SURFACE) {
-	    fprintf(stderr, "failed to create window surface\n");
-	    return -1;
+        fprintf(stderr, "failed to create window surface\n");
+        return -1;
     }
     printf("created window\n");
 
@@ -91,17 +91,19 @@ int Wayland_CreateWindow(_THIS, SDL_Window * window)
 
 void Wayland_DestroyWindow(_THIS, SDL_Window * window)
 {
-	SDL_WaylandData *data = (SDL_WaylandData *) _this->driverdata;
-	SDL_WaylandWindow *wind = (SDL_WaylandWindow *) window->driverdata;
+    SDL_WaylandData *data = (SDL_WaylandData *) _this->driverdata;
+    SDL_WaylandWindow *wind = (SDL_WaylandWindow *) window->driverdata;
 
-	window->driverdata = NULL;
-	int i;
+    window->driverdata = NULL;
+    int i;
 
-	if (data) {
-		eglDestroySurface(data->edpy, wind->esurf);
-		wl_egl_window_destroy(wind->egl_window);
-		wl_surface_destroy(wind->surface);
-		SDL_free(wind);
-	}
-	printf("destroyed window\n");
+    if (data) {
+        eglDestroySurface(data->edpy, wind->esurf);
+        wl_egl_window_destroy(wind->egl_window);
+        wl_surface_destroy(wind->surface);
+        SDL_free(wind);
+    }
+    printf("destroyed window\n");
 }
+
+/* vi: set ts=4 sw=4 expandtab: */
