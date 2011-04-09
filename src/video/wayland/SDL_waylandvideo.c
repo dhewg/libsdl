@@ -33,7 +33,6 @@
 #include "SDL_waylandevents_c.h"
 #include "SDL_waylandwindow.h"
 #include "SDL_waylandgl.h"
-#include "../SDL_renderer_gl.h"
 
 
 #define WAYLANDVID_DRIVER_NAME "wayland"
@@ -219,7 +218,6 @@ Wayland_VideoInit(_THIS)
     display.current_mode = mode;
     display.driverdata = NULL;
     SDL_AddVideoDisplay(&display);
-    SDL_AddRenderDriver(&display, &GL_RenderDriver);
 
     return 0;
 }

@@ -25,6 +25,7 @@
 #ifndef _SDL_waylandvideo_h
 #define _SDL_waylandvideo_h
 
+#include "SDL_scancode.h"
 #include "../SDL_sysvideo.h"
 #include <wayland-client.h>
 #include <wayland-client-protocol.h>
@@ -55,7 +56,7 @@ typedef struct
     int event_fd;
     int event_mask; 
 
-    const SDL_scancode *input_table;
+    const SDL_Scancode *input_table;
     int input_table_size;
 } SDL_WaylandData;
 
