@@ -30,7 +30,9 @@
 #include "SDL_waylandvideo.h"
 #include "SDL_waylandevents_c.h"
 #include "SDL_waylandwindow.h"
+
 #include <X11/extensions/XKBcommon.h>
+#include <linux/input.h>
 
 #include "../../events/scancodes_xfree86.h"
 
@@ -120,11 +122,29 @@ window_handle_button(void *data,
 {
     struct SDL_WaylandInput *input = data;
     SDL_WaylandWindow *window = input->pointer_focus;
+    uint32_t sdl_button;
+
+    switch (button) {
+    case BTN_LEFT:
+    default:
+        sdl_button = SDL_BUTTON_LEFT;
+        break;
+    case BTN_MIDDLE:
+        sdl_button = SDL_BUTTON_MIDDLE;
+        break;
+    case BTN_RIGHT:
+        sdl_button = SDL_BUTTON_RIGHT;
+        break;
+    case BTN_SIDE:
+        sdl_button = SDL_BUTTON_X1;
+        break;
+    case BTN_EXTRA:
+        sdl_button = SDL_BUTTON_X2;
+        break;
+    }
 
     SDL_SendMouseButton(window->sdlwindow,
-                        state ? SDL_PRESSED : SDL_RELEASED,
-                        button);
-
+                        state ? SDL_PRESSED : SDL_RELEASED, sdl_button);
 }
 
 static char *
