@@ -53,13 +53,20 @@ Wayland_GL_LoadLibrary(_THIS, const char *path)
     EGLint num_config;
     EGLint config_attribs[] = {
         EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-        EGL_RED_SIZE, 1,
-        EGL_GREEN_SIZE, 1,
-        EGL_BLUE_SIZE, 1,
-        EGL_DEPTH_SIZE, 1,
+        EGL_RED_SIZE, 0,
+        EGL_GREEN_SIZE, 0,
+        EGL_BLUE_SIZE, 0,
+        EGL_DEPTH_SIZE, 0,
+        EGL_ALPHA_SIZE, 0,
         EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
         EGL_NONE
     };
+
+    config_attribs[ 3] = _this->gl_config.red_size;
+    config_attribs[ 5] = _this->gl_config.green_size;
+    config_attribs[ 7] = _this->gl_config.blue_size;
+    config_attribs[ 9] = _this->gl_config.depth_size;
+    config_attribs[11] = _this->gl_config.alpha_size;
 
     fprintf(stderr, "start laod library\n");
 
