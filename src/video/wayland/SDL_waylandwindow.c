@@ -73,7 +73,10 @@ int Wayland_CreateWindow(_THIS, SDL_Window * window)
         wl_compositor_create_surface(c->compositor);
     wl_surface_set_user_data(data->surface, data);
 
-    visual = wl_display_get_rgb_visual(c->display);
+    if (_this->gl_config.alpha_size == 0)
+        visual = wl_display_get_rgb_visual(c->display);
+    else
+        visual = wl_display_get_premultiplied_argb_visual(c->display);
     data->egl_window = wl_egl_window_create(c->egl_display, data->surface,
                                             window->w, window->h, visual);
     data->esurf =
