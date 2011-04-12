@@ -22,8 +22,8 @@
 
 #include "SDL_config.h"
 
-#ifndef _SDL_waylandgl_h
-#define _SDL_waylandgl_h
+#ifndef _SDL_waylandopengl_h
+#define _SDL_waylandopengl_h
 
 #include "SDL_waylandwindow.h"
 
@@ -36,6 +36,6 @@ extern int Wayland_GL_LoadLibrary(_THIS, const char *path);
 extern void Wayland_GL_UnloadLibrary(_THIS);
 extern void *Wayland_GL_GetProcAddress(_THIS, const char *proc);
 
-#endif /* _SDL_waylandgl_h */
+#endif /* _SDL_waylandopengl_h */
 
 /* vi: set ts=4 sw=4 expandtab: */

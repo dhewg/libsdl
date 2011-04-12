@@ -32,7 +32,7 @@
 #include "SDL_waylandvideo.h"
 #include "SDL_waylandevents_c.h"
 #include "SDL_waylandwindow.h"
-#include "SDL_waylandgl.h"
+#include "SDL_waylandopengl.h"
 
 
 #define WAYLANDVID_DRIVER_NAME "wayland"

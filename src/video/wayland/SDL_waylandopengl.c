@@ -22,7 +22,7 @@
 
 #include "SDL_config.h"
 
-#include "SDL_waylandgl.h"
+#include "SDL_waylandopengl.h"
 #include "SDL_waylandwindow.h"
 #include <dlfcn.h>
 
