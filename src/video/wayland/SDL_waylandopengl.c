@@ -32,16 +32,7 @@ Wayland_GL_SwapWindow(_THIS, SDL_Window * window)
     SDL_WaylandWindow *wind = (SDL_WaylandWindow *) window->driverdata;
     SDL_WaylandData *data = _this->driverdata;
 
-    GLfloat clear_color[4];
-
     eglSwapBuffers(data->edpy, wind->esurf);
-
-    glGetFloatv(GL_COLOR_CLEAR_VALUE, clear_color);
-
-    glClearColor(0.0, 0.0, 0.0, 0.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(clear_color[0], clear_color[1],
-                 clear_color[2], clear_color[3]);
 }
 
 int
