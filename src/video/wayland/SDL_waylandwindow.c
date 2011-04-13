@@ -84,9 +84,10 @@ int Wayland_CreateWindow(_THIS, SDL_Window * window)
                                data->egl_window, NULL);
 
     if (data->esurf == EGL_NO_SURFACE) {
-        fprintf(stderr, "failed to create window surface\n");
+        SDL_SetError("failed to create a window surface\n");
         return -1;
     }
+
     printf("created window\n");
 
     return 0;
@@ -106,6 +107,7 @@ void Wayland_DestroyWindow(_THIS, SDL_Window * window)
         wl_surface_destroy(wind->surface);
         SDL_free(wind);
     }
+
     printf("destroyed window\n");
 }
 

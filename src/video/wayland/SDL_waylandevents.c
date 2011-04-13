@@ -61,7 +61,7 @@ Wayland_init_xkb(SDL_WaylandData *d)
 
     d->xkb = xkb_compile_keymap_from_rules(&names);
     if (!d->xkb) {
-        fprintf(stderr, "Failed to compile keymap\n");
+        SDL_SetError("failed to compile keymap\n");
         exit(1);
     }
 
@@ -88,7 +88,7 @@ Wayland_PumpEvents(_THIS)
 
         retval = select(d->event_fd + 1, &rfds, NULL, NULL, &tv);
         if (retval < 0) {
-            fprintf(stderr, "select: %s\n", strerror(errno));
+            SDL_SetError("select faild: %s\n", strerror(errno));
             break;
         }
         if (retval == 1)
@@ -287,7 +287,6 @@ Wayland_display_add_input(SDL_WaylandData *d, uint32_t id)
     wl_input_device_add_listener(input->input_device,
                                  &input_device_listener, input);
     wl_input_device_set_user_data(input->input_device, input);
-    printf("Add input device\n");
 }
 
 /* vi: set ts=4 sw=4 expandtab: */

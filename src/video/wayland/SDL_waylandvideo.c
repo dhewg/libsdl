@@ -177,17 +177,13 @@ Wayland_VideoInit(_THIS)
 {
     SDL_WaylandData *data;
 
-    printf("init\n");
-
     data = malloc(sizeof *data);
     if (data == NULL)
         return 0;
 
     _this->driverdata = data;
-    printf("pre connect\n");
 
     data->display = wl_display_connect(NULL);
-    printf("post connect\n");
     if (data->display == NULL) {
         SDL_SetError("Failed to connecto to a Wayland display.");
         return 0;
@@ -198,7 +194,6 @@ Wayland_VideoInit(_THIS)
                                    display_handle_global, data);
 
     wl_display_iterate(data->display, WL_DISPLAY_READABLE);
-    fprintf(stderr, "after global listener iteration\n");
 
     data->event_fd = wl_display_get_fd(data->display, update_event_mask, data);
 

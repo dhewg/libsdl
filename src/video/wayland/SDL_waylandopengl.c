@@ -59,30 +59,24 @@ Wayland_GL_LoadLibrary(_THIS, const char *path)
     config_attribs[ 9] = _this->gl_config.depth_size;
     config_attribs[11] = _this->gl_config.alpha_size;
 
-    fprintf(stderr, "start laod library\n");
-
     data->edpy = eglGetDisplay(data->egl_display);
 
-    fprintf(stderr, "after get dispaly\n");
     if (!eglInitialize(data->edpy, &major, &minor)) {
         SDL_SetError("failed to initialize display\n");
         return -1;
     }
-    fprintf(stderr, "after initiualize\n");
 
     eglBindAPI(EGL_OPENGL_API);
 
     if (!eglChooseConfig(data->edpy, config_attribs,
                          &data->econf, 1, &num_config)) {
-        fprintf(stderr, "failed to choose config\n");
+        SDL_SetError("failed to choose a config\n");
         return -1;
     }
-    fprintf(stderr, "after choose config\n");
     if (num_config != 1) {
-        fprintf(stderr, "got != 1 configs\n");
+        SDL_SetError("failed to choose a config\n");
         return -1;
     }
-    fprintf(stderr, "end load library\n");
     Wayland_PumpEvents(_this);
 
     return 0;
@@ -133,7 +127,6 @@ Wayland_GL_CreateContext(_THIS, SDL_Window * window)
 {
     SDL_WaylandData *data = _this->driverdata;
 
-    printf("Wayland_GL_CreateContext\n");
     data->context = eglCreateContext(data->edpy, data->econf,
                                      EGL_NO_CONTEXT, NULL);
 
@@ -152,6 +145,7 @@ int
 Wayland_GL_MakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context)
 {
     printf("Wayland_GL_MakeCurrent\n");
+
     SDL_WaylandData *data = _this->driverdata;
     SDL_WaylandWindow *wind = (SDL_WaylandWindow *) window->driverdata;
 
