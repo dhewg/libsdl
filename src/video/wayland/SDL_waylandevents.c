@@ -287,6 +287,8 @@ Wayland_display_add_input(SDL_WaylandData *d, uint32_t id)
     wl_input_device_add_listener(input->input_device,
                                  &input_device_listener, input);
     wl_input_device_set_user_data(input->input_device, input);
+
+    wayland_schedule_write(d);
 }
 
 /* vi: set ts=4 sw=4 expandtab: */

@@ -56,9 +56,18 @@ typedef struct
     int event_fd;
     int event_mask; 
 
+    int schedule_write;
+
     const SDL_Scancode *input_table;
     int input_table_size;
 } SDL_WaylandData;
+
+static inline void
+wayland_schedule_write(SDL_WaylandData *data)
+{
+    if (data->schedule_write)
+        wl_display_iterate(data->display, WL_DISPLAY_WRITABLE);
+}
 
 #endif /* _SDL_nullvideo_h */
 

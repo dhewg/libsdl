@@ -167,7 +167,9 @@ static int update_event_mask(uint32_t mask, void *data)
     d->event_mask = mask;
 
     if (mask & WL_DISPLAY_WRITABLE)
-        wl_display_iterate(d->display, WL_DISPLAY_WRITABLE);
+        d->schedule_write = 1;
+    else
+        d->schedule_write = 0;
 
     return 0;
 }
@@ -180,6 +182,7 @@ Wayland_VideoInit(_THIS)
     data = malloc(sizeof *data);
     if (data == NULL)
         return 0;
+    data->schedule_write = 0;
 
     _this->driverdata = data;
 
@@ -213,6 +216,8 @@ Wayland_VideoInit(_THIS)
     display.current_mode = mode;
     display.driverdata = NULL;
     SDL_AddVideoDisplay(&display);
+
+    wayland_schedule_write(data);
 
     return 0;
 }

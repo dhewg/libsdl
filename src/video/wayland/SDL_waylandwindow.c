@@ -37,6 +37,8 @@ void Wayland_ShowWindow(_THIS, SDL_Window * window)
        window->x, window->y,
        window->w, window->h);
        */
+
+    wayland_schedule_write((SDL_WaylandData *) _this->driverdata);
 }
 
 
@@ -88,6 +90,8 @@ int Wayland_CreateWindow(_THIS, SDL_Window * window)
         return -1;
     }
 
+    wayland_schedule_write(c);
+
     printf("created window\n");
 
     return 0;
@@ -106,6 +110,7 @@ void Wayland_DestroyWindow(_THIS, SDL_Window * window)
         wl_egl_window_destroy(wind->egl_window);
         wl_surface_destroy(wind->surface);
         SDL_free(wind);
+        wayland_schedule_write(data);
     }
 
     printf("destroyed window\n");

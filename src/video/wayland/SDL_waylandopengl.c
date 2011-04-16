@@ -33,6 +33,8 @@ Wayland_GL_SwapWindow(_THIS, SDL_Window * window)
     SDL_WaylandData *data = _this->driverdata;
 
     eglSwapBuffers(data->edpy, wind->esurf);
+
+    wayland_schedule_write(data);
 }
 
 int
@@ -79,6 +81,8 @@ Wayland_GL_LoadLibrary(_THIS, const char *path)
     }
     Wayland_PumpEvents(_this);
 
+    wayland_schedule_write(data);
+
     return 0;
 }
 
@@ -120,6 +124,8 @@ Wayland_GL_UnloadLibrary(_THIS)
         _this->gl_config.dll_handle = NULL;
         _this->gl_config.driver_loaded = 0;
     }
+
+    wayland_schedule_write(data);
 }
 
 SDL_GLContext
@@ -138,6 +144,8 @@ Wayland_GL_CreateContext(_THIS, SDL_Window * window)
 
     Wayland_GL_MakeCurrent(_this, window, NULL);
 
+    wayland_schedule_write(data);
+
     return data->context;
 }
 
@@ -154,6 +162,8 @@ Wayland_GL_MakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context)
         SDL_SetError("Unable to make EGL context current");
         return -1;
     }
+
+    wayland_schedule_write(data);
 
     return 0;
 }
