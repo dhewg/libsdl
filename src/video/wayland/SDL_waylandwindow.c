@@ -79,7 +79,7 @@ int Wayland_CreateWindow(_THIS, SDL_Window * window)
         visual = wl_display_get_rgb_visual(c->display);
     else
         visual = wl_display_get_premultiplied_argb_visual(c->display);
-    data->egl_window = wl_egl_window_create(c->egl_display, data->surface,
+    data->egl_window = wl_egl_window_create(data->surface,
                                             window->w, window->h, visual);
     data->esurf =
         eglCreateWindowSurface(c->edpy, c->econf,

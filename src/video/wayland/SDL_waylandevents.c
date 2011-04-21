@@ -280,7 +280,7 @@ Wayland_display_add_input(SDL_WaylandData *d, uint32_t id)
 
     memset(input, 0, sizeof *input);
     input->display = d;
-    input->input_device = wl_input_device_create(d->display, id);
+    input->input_device = wl_input_device_create(d->display, id, 1);
     input->pointer_focus = NULL;
     input->keyboard_focus = NULL;
 

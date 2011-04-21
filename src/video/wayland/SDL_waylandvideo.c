@@ -146,21 +146,22 @@ display_handle_global(struct wl_display *display, uint32_t id,
 {
     SDL_WaylandData *d = data;
 
-    if (strcmp(interface, "compositor") == 0) {
-        d->compositor = wl_compositor_create(display, id);
-    } else if (strcmp(interface, "output") == 0) {
-        d->output = wl_output_create(display, id);
+    if (strcmp(interface, "wl_compositor") == 0) {
+        d->compositor = wl_compositor_create(display, id, 1);
+    } else if (strcmp(interface, "wl_output") == 0) {
+        d->output = wl_output_create(display, id, 1);
         wl_output_add_listener(d->output, &output_listener, d);
-    } else if (strcmp(interface, "input_device") == 0) {
+    } else if (strcmp(interface, "wl_input_device") == 0) {
         Wayland_display_add_input(d, id);
-    } else if (strcmp(interface, "shell") == 0) {
-        d->shell = wl_shell_create(display, id);
+    } else if (strcmp(interface, "wl_shell") == 0) {
+        d->shell = wl_shell_create(display, id, 1);
         wl_shell_add_listener(d->shell, &shell_listener, d);
     }
 }
 
 
-static int update_event_mask(uint32_t mask, void *data)
+static int
+update_event_mask(uint32_t mask, void *data)
 {
     SDL_WaylandData *d = data;
 
@@ -191,7 +192,6 @@ Wayland_VideoInit(_THIS)
         SDL_SetError("Failed to connecto to a Wayland display.");
         return 0;
     }
-    data->egl_display = wl_egl_display_create(data->display);
 
     wl_display_add_global_listener(data->display,
                                    display_handle_global, data);

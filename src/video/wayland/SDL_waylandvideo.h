@@ -38,7 +38,6 @@
 typedef struct
 {
     struct wl_display *display;
-    struct wl_egl_display *egl_display;
     struct wl_compositor *compositor;
     struct wl_output *output;
     struct wl_shell *shell;

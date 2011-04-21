@@ -61,7 +61,7 @@ Wayland_GL_LoadLibrary(_THIS, const char *path)
     config_attribs[ 9] = _this->gl_config.depth_size;
     config_attribs[11] = _this->gl_config.alpha_size;
 
-    data->edpy = eglGetDisplay(data->egl_display);
+    data->edpy = eglGetDisplay(data->display);
 
     if (!eglInitialize(data->edpy, &major, &minor)) {
         SDL_SetError("failed to initialize display\n");
