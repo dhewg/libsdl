@@ -31,7 +31,11 @@ void Wayland_ShowWindow(_THIS, SDL_Window * window)
 {
     SDL_WaylandWindow *wind = (SDL_WaylandWindow*) window->driverdata;
 
-    wl_surface_map_toplevel(wind->surface);
+    printf("sow window: %d,%d\n", window->w, window->h);
+    if (window->flags & SDL_WINDOW_FULLSCREEN)
+        wl_surface_map_fullscreen(wind->surface);
+    else
+        wl_surface_map_toplevel(wind->surface);
     /*
        wl_surface_map(wind->surface,
        window->x, window->y,

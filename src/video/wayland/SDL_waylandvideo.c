@@ -38,9 +38,16 @@
 #define WAYLANDVID_DRIVER_NAME "wayland"
 
 /* Initialization/Query functions */
-static int Wayland_VideoInit(_THIS);
-static int Wayland_SetDisplayMode(_THIS, SDL_VideoDisplay * display, SDL_DisplayMode * mode);
-static void Wayland_VideoQuit(_THIS);
+static int
+Wayland_VideoInit(_THIS);
+
+static void
+Wayland_GetDisplayModes(_THIS, SDL_VideoDisplay *sdl_display);
+static int
+Wayland_SetDisplayMode(_THIS, SDL_VideoDisplay * display, SDL_DisplayMode * mode);
+
+static void
+Wayland_VideoQuit(_THIS);
 
 
 /* Wayland driver bootstrap functions */
@@ -81,6 +88,7 @@ Wayland_CreateDevice(int devindex)
     device->VideoInit = Wayland_VideoInit;
     device->VideoQuit = Wayland_VideoQuit;
     device->SetDisplayMode = Wayland_SetDisplayMode;
+    device->GetDisplayModes = Wayland_GetDisplayModes;
 
     device->PumpEvents = Wayland_PumpEvents;
 
@@ -208,7 +216,7 @@ Wayland_VideoInit(_THIS)
     /* Use a fake 32-bpp desktop mode */
     mode.format = SDL_PIXELFORMAT_RGB888;
     mode.w = data->screen_allocation.width;
-    mode.h = data->screen_allocation.width;
+    mode.h = data->screen_allocation.height;
     mode.refresh_rate = 0;
     mode.driverdata = NULL;
     SDL_zero(display);
@@ -220,6 +228,25 @@ Wayland_VideoInit(_THIS)
     wayland_schedule_write(data);
 
     return 0;
+}
+
+static void
+Wayland_GetDisplayModes(_THIS, SDL_VideoDisplay *sdl_display)
+{
+    SDL_WaylandData *data = _this->driverdata;
+    SDL_DisplayMode mode;
+
+    Wayland_PumpEvents(_this);
+
+    mode.w = data->screen_allocation.width;
+    mode.h = data->screen_allocation.height;
+    mode.refresh_rate = 0;
+    mode.driverdata = NULL;
+
+    mode.format = SDL_PIXELFORMAT_RGB888;
+    SDL_AddDisplayMode(sdl_display, &mode);
+    mode.format = SDL_PIXELFORMAT_RGBA8888;
+    SDL_AddDisplayMode(sdl_display, &mode);
 }
 
 static int
