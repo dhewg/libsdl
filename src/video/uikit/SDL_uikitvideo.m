@@ -18,10 +18,11 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
+#include "SDL_config.h"
+
+#if SDL_VIDEO_DRIVER_UIKIT
 
 #import <UIKit/UIKit.h>
-
-#include "SDL_config.h"
 
 #include "SDL_video.h"
 #include "SDL_mouse.h"
@@ -143,7 +144,6 @@ UIKit_GetDisplayModes(_THIS, SDL_VideoDisplay * display)
         return;
     }
 
-    const NSArray *modes = [uiscreen availableModes];
     for (UIScreenMode *uimode in [uiscreen availableModes]) {
         CGSize size = [uimode size];
         mode.format = SDL_PIXELFORMAT_ABGR8888;
@@ -178,7 +178,7 @@ UIKit_AddDisplay(UIScreen *uiscreen, int w, int h)
 
     // UIScreenMode showed up in 3.2 (the iPad and later). We're
     //  misusing this supports_multiple_displays flag here for that.
-    if (!SDL_UIKit_supports_multiple_displays) {
+    if (SDL_UIKit_supports_multiple_displays) {
         UIScreenMode *uimode = [uiscreen currentMode];
         [uimode retain];  // once for the desktop_mode
         [uimode retain];  // once for the current_mode
@@ -273,5 +273,7 @@ UIKit_VideoQuit(_THIS)
         }
     }
 }
+
+#endif /* SDL_VIDEO_DRIVER_UIKIT */
 
 /* vi: set ts=4 sw=4 expandtab: */

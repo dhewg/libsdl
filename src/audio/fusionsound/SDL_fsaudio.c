@@ -20,6 +20,8 @@
 */
 #include "SDL_config.h"
 
+#if SDL_AUDIO_DRIVER_FUSIONSOUND
+
 /* Allow access to a raw mixing buffer */
 
 #ifdef HAVE_SIGNAL_H
@@ -344,5 +346,7 @@ SDL_FS_Init(SDL_AudioDriverImpl * impl)
 AudioBootStrap FUSIONSOUND_bootstrap = {
     "fusionsound", "FusionSound", SDL_FS_Init, 0
 };
+
+#endif /* SDL_AUDIO_DRIVER_FUSIONSOUND */
 
 /* vi: set ts=4 sw=4 expandtab: */

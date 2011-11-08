@@ -20,6 +20,8 @@
 */
 #include "SDL_config.h"
 
+#if SDL_AUDIO_DRIVER_NAS
+
 /* Allow access to a raw mixing buffer */
 
 #include <signal.h>
@@ -396,5 +398,7 @@ NAS_Init(SDL_AudioDriverImpl * impl)
 AudioBootStrap NAS_bootstrap = {
     "nas", "Network Audio System", NAS_Init, 0
 };
+
+#endif /* SDL_AUDIO_DRIVER_NAS */
 
 /* vi: set ts=4 sw=4 expandtab: */

@@ -20,6 +20,8 @@
 */
 #include "SDL_config.h"
 
+#if SDL_VIDEO_DRIVER_WINDOWS
+
 #include "SDL_windowsvideo.h"
 #include "SDL_windowswindow.h"
 #include "../../events/SDL_clipboardevents_c.h"
@@ -136,11 +138,13 @@ WIN_GetClipboardText(_THIS)
 SDL_bool
 WIN_HasClipboardText(_THIS)
 {
-    if (IsClipboardFormatAvailable(TEXT_FORMAT)) {
-        return SDL_TRUE;
-    } else {
-        return SDL_FALSE;
-    }
+    SDL_bool result = SDL_FALSE;
+    char *text = WIN_GetClipboardText(_this);
+    if (text) {
+        result = (SDL_strlen(text)>0) ? SDL_TRUE : SDL_FALSE;
+        SDL_free(text);
+    } 
+    return result;
 }
 
 void
@@ -160,5 +164,7 @@ WIN_CheckClipboardUpdate(struct SDL_VideoData * data)
         data->clipboard_count = count;
     }
 }
+
+#endif /* SDL_VIDEO_DRIVER_WINDOWS */
 
 /* vi: set ts=4 sw=4 expandtab: */

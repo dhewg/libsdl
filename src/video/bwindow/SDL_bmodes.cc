@@ -18,8 +18,9 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
+#include "SDL_config.h"
 
-
+#if SDL_VIDEO_DRIVER_BWINDOW
 
 #include <AppKit.h>
 #include <InterfaceKit.h>
@@ -184,6 +185,10 @@ int32 BE_BPPToSDLPxFormat(int32 bpp) {
 		return SDL_PIXELFORMAT_INDEX4LSB;
 		break;
 	}
+
+	/* May never get here, but safer and needed to shut up compiler */
+	SDL_SetError("Invalid bpp value");
+	return 0;       
 }
 
 static void _BDisplayModeToSdlDisplayMode(display_mode *bmode,
@@ -236,6 +241,7 @@ int BE_InitModes(_THIS) {
 	/* TODO: When Haiku supports multiple display screens, call
 	   _AddDisplayScreen() for each of them. */
 	_AddDisplay(&screen);
+	return 0;
 }
 
 int BE_QuitModes(_THIS) {
@@ -322,3 +328,5 @@ int BE_SetDisplayMode(_THIS, SDL_VideoDisplay *display, SDL_DisplayMode *mode){
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* SDL_VIDEO_DRIVER_BWINDOW */

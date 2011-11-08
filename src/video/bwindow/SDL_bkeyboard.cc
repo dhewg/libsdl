@@ -19,6 +19,9 @@
     Sam Lantinga
     slouken@libsdl.org
 */
+#include "SDL_config.h"
+
+#if SDL_VIDEO_DRIVER_BWINDOW
 
 #include <SupportDefs.h>
 #include <support/UTF8.h>
@@ -158,7 +161,7 @@ void BE_InitOSKeymap() {
 }
 
 SDL_Scancode BE_GetScancodeFromBeKey(int32 bkey) {
-	if(bkey > 0 && bkey < SDL_TABLESIZE(keymap)) {
+	if(bkey > 0 && bkey < (int32)SDL_TABLESIZE(keymap)) {
 		return keymap[bkey];
 	} else {
 		return SDL_SCANCODE_UNKNOWN;
@@ -182,3 +185,5 @@ void BE_SetKeyState(int32 bkey, int8 state) {
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* SDL_VIDEO_DRIVER_BWINDOW */

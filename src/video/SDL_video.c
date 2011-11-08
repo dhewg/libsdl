@@ -576,7 +576,7 @@ SDL_GetNumVideoDisplays(void)
     return _this->num_displays;
 }
 
-int
+static int
 SDL_GetIndexOfDisplay(SDL_VideoDisplay *display)
 {
     int displayIndex;
@@ -653,12 +653,6 @@ SDL_AddDisplayMode(SDL_VideoDisplay * display,  const SDL_DisplayMode * mode)
               sizeof(SDL_DisplayMode), cmpmodes);
 
     return SDL_TRUE;
-}
-
-SDL_VideoDisplay *
-SDL_GetFirstDisplay(void)
-{
-    return &_this->displays[0];
 }
 
 static int
@@ -847,7 +841,7 @@ SDL_GetClosestDisplayMode(int displayIndex,
     return SDL_GetClosestDisplayModeForDisplay(display, mode, closest);
 }
 
-int
+static int
 SDL_SetDisplayModeForDisplay(SDL_VideoDisplay * display, const SDL_DisplayMode * mode)
 {
     SDL_DisplayMode display_mode;
@@ -1192,6 +1186,9 @@ SDL_CreateWindow(const char *title, int x, int y, int w, int h, Uint32 flags)
         SDL_SetWindowTitle(window, title);
     }
     SDL_FinishWindowCreation(window, flags);
+    
+    /* If the window was created fullscreen, make sure the mode code matches */
+    SDL_UpdateFullscreenMode(window, FULLSCREEN_VISIBLE(window));
 
     return window;
 }

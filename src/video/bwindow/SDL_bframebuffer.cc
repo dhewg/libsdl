@@ -18,6 +18,9 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
+#include "SDL_config.h"
+
+#if SDL_VIDEO_DRIVER_BWINDOW
 
 #include "SDL_bframebuffer.h"
 
@@ -115,7 +118,6 @@ int BE_UpdateWindowFramebuffer(_THIS, SDL_Window * window,
 
 int32 BE_DrawThread(void *data) {
 	SDL_BWin *bwin = (SDL_BWin*)data;
-	SDL_Window *window = _GetBeApp()->GetSDLWindow(bwin->GetID());
 	
 	BScreen bscreen;
 	if(!bscreen.IsValid()) {
@@ -249,3 +251,5 @@ int32 BE_UpdateOnce(SDL_Window *window) {
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* SDL_VIDEO_DRIVER_BWINDOW */

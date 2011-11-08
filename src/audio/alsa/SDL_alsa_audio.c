@@ -20,6 +20,8 @@
 */
 #include "SDL_config.h"
 
+#if SDL_AUDIO_DRIVER_ALSA
+
 /* Allow access to a raw mixing buffer */
 
 #include <sys/types.h>
@@ -692,5 +694,7 @@ ALSA_Init(SDL_AudioDriverImpl * impl)
 AudioBootStrap ALSA_bootstrap = {
     "alsa", "ALSA PCM audio", ALSA_Init, 0
 };
+
+#endif /* SDL_AUDIO_DRIVER_ALSA */
 
 /* vi: set ts=4 sw=4 expandtab: */

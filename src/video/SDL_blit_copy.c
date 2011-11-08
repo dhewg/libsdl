@@ -59,28 +59,31 @@ SDL_memcpySSE(Uint8 * dst, const Uint8 * src, int len)
 static __inline__ void
 SDL_memcpyMMX(Uint8 * dst, const Uint8 * src, int len)
 {
+    const int remain = (len & 63);
     int i;
 
-	__m64* d64 = (__m64*)dst;
-	__m64* s64 = (__m64*)src;
-	
-	for(i= len / 64; i--;) {
-	
-		d64[0] = s64[0];
-		d64[1] = s64[1];
-		d64[2] = s64[2];
-		d64[3] = s64[3];
-		d64[4] = s64[4];
-		d64[5] = s64[5];
-		d64[6] = s64[6];
-		d64[7] = s64[7];
-	
-		d64 += 8;
-		s64 += 8;
+    __m64* d64 = (__m64*)dst;
+    __m64* s64 = (__m64*)src;
+
+    for(i= len / 64; i--;) {
+        d64[0] = s64[0];
+        d64[1] = s64[1];
+        d64[2] = s64[2];
+        d64[3] = s64[3];
+        d64[4] = s64[4];
+        d64[5] = s64[5];
+        d64[6] = s64[6];
+        d64[7] = s64[7];
+
+        d64 += 8;
+        s64 += 8;
     }
 
-    if (len & 63)
-        SDL_memcpy(dst, src, len & 63);
+    if (remain)
+    {
+        const int skip = len - remain;
+        SDL_memcpy(dst + skip, src + skip, remain);
+    }
 }
 #endif /* __MMX__ */
 
@@ -128,7 +131,7 @@ SDL_BlitCopy(SDL_BlitInfo * info)
 #endif
 
 #ifdef __MMX__
-    if (SDL_HasMMX()) {
+    if (SDL_HasMMX() && !(srcskip & 7) && !(dstskip & 7)) {
         while (h--) {
             SDL_memcpyMMX(dst, src, w);
             src += srcskip;

@@ -20,6 +20,8 @@
 */
 #include "SDL_config.h"
 
+#if SDL_AUDIO_DRIVER_ARTS
+
 /* Allow access to a raw mixing buffer */
 
 #ifdef HAVE_SIGNAL_H
@@ -371,5 +373,7 @@ ARTS_Init(SDL_AudioDriverImpl * impl)
 AudioBootStrap ARTS_bootstrap = {
     "arts", "Analog RealTime Synthesizer", ARTS_Init, 0
 };
+
+#endif /* SDL_AUDIO_DRIVER_ARTS */
 
 /* vi: set ts=4 sw=4 expandtab: */

@@ -18,6 +18,9 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
+#include "SDL_config.h"
+
+#if SDL_VIDEO_DRIVER_BWINDOW
 
 #include "SDL_bopengl.h"
 
@@ -59,6 +62,7 @@ int BE_GL_LoadLibrary(_THIS, const char *path)
 					SDL_arraysize(_this->gl_config.driver_path));
 		}
 	}
+	return 0;
 }
 
 void *BE_GL_GetProcAddress(_THIS, const char *proc)
@@ -208,11 +212,8 @@ void BE_GL_RebootContexts(_THIS) {
 
 
 
-
-
-
-
-
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* SDL_VIDEO_DRIVER_BWINDOW */

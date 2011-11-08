@@ -169,6 +169,11 @@ GLES2_WindowEvent(SDL_Renderer * renderer, const SDL_WindowEvent *event)
         /* Rebind the context to the window area */
         SDL_CurrentContext = NULL;
     }
+
+    if (event->event == SDL_WINDOWEVENT_MINIMIZED) {
+        /* According to Apple documentation, we need to finish drawing NOW! */
+	glFinish();
+    }
 }
 
 static int
@@ -190,24 +195,34 @@ static void
 GLES2_DestroyRenderer(SDL_Renderer *renderer)
 {
     GLES2_DriverContext *rdata = (GLES2_DriverContext *)renderer->driverdata;
-    GLES2_ProgramCacheEntry *entry;
-    GLES2_ProgramCacheEntry *next;
 
     /* Deallocate everything */
     if (rdata) {
         GLES2_ActivateRenderer(renderer);
 
-        entry = rdata->program_cache.head;
-        while (entry) {
-            glDeleteShader(entry->vertex_shader->id);
-            glDeleteShader(entry->fragment_shader->id);
-            SDL_free(entry->vertex_shader);
-            SDL_free(entry->fragment_shader);
-            glDeleteProgram(entry->id);
-            next = entry->next;
-            SDL_free(entry);
-            entry = next;
-        }
+	{
+	    GLES2_ShaderCacheEntry *entry;
+	    GLES2_ShaderCacheEntry *next;
+	    entry = rdata->shader_cache.head;
+	    while (entry)
+	    {
+                glDeleteShader(entry->id);
+                next = entry->next;
+                SDL_free(entry);
+                entry = next;
+	    }
+	}
+	{
+	    GLES2_ProgramCacheEntry *entry;
+	    GLES2_ProgramCacheEntry *next;
+            entry = rdata->program_cache.head;
+            while (entry) {
+                glDeleteProgram(entry->id);
+                next = entry->next;
+                SDL_free(entry);
+                entry = next;
+            }
+	}
         if (rdata->context) {
             SDL_GL_DeleteContext(rdata->context);
         }
@@ -455,7 +470,7 @@ GLES2_CacheProgram(SDL_Renderer *renderer, GLES2_ShaderCacheEntry *vertex,
     }
     if (entry)
     {
-        if (rdata->program_cache.count > 1)
+        if (rdata->program_cache.head != entry)
         {
             if (entry->next)
                 entry->next->prev = entry->prev;
@@ -786,6 +801,8 @@ static int GLES2_RenderDrawLines(SDL_Renderer *renderer, const SDL_Point *points
 static int GLES2_RenderFillRects(SDL_Renderer *renderer, const SDL_Rect *rects, int count);
 static int GLES2_RenderCopy(SDL_Renderer *renderer, SDL_Texture *texture, const SDL_Rect *srcrect,
                             const SDL_Rect *dstrect);
+static int GLES2_RenderReadPixels(SDL_Renderer * renderer, const SDL_Rect * rect,
+                    Uint32 pixel_format, void * pixels, int pitch);
 static void GLES2_RenderPresent(SDL_Renderer *renderer);
 
 
@@ -875,7 +892,6 @@ GLES2_SetDrawingState(SDL_Renderer * renderer)
 static int
 GLES2_RenderDrawPoints(SDL_Renderer *renderer, const SDL_Point *points, int count)
 {
-    GLES2_DriverContext *rdata = (GLES2_DriverContext *)renderer->driverdata;
     GLfloat *vertices;
     int idx;
 
@@ -908,7 +924,6 @@ GLES2_RenderDrawPoints(SDL_Renderer *renderer, const SDL_Point *points, int coun
 static int
 GLES2_RenderDrawLines(SDL_Renderer *renderer, const SDL_Point *points, int count)
 {
-    GLES2_DriverContext *rdata = (GLES2_DriverContext *)renderer->driverdata;
     GLfloat *vertices;
     int idx;
 
@@ -941,7 +956,6 @@ GLES2_RenderDrawLines(SDL_Renderer *renderer, const SDL_Point *points, int count
 static int
 GLES2_RenderFillRects(SDL_Renderer *renderer, const SDL_Rect *rects, int count)
 {
-    GLES2_DriverContext *rdata = (GLES2_DriverContext *)renderer->driverdata;
     GLfloat vertices[8];
     int idx;
 
@@ -1045,6 +1059,57 @@ GLES2_RenderCopy(SDL_Renderer *renderer, SDL_Texture *texture, const SDL_Rect *s
         return -1;
     }
     return 0;
+}
+
+static int
+GLES2_RenderReadPixels(SDL_Renderer * renderer, const SDL_Rect * rect,
+                    Uint32 pixel_format, void * pixels, int pitch)
+{
+    SDL_Window *window = renderer->window;
+    Uint32 temp_format = SDL_PIXELFORMAT_ABGR8888;
+    void *temp_pixels;
+    int temp_pitch;
+    Uint8 *src, *dst, *tmp;
+    int w, h, length, rows;
+    int status;
+
+    GLES2_ActivateRenderer(renderer);
+
+    temp_pitch = rect->w * SDL_BYTESPERPIXEL(temp_format);
+    temp_pixels = SDL_malloc(rect->h * temp_pitch);
+    if (!temp_pixels) {
+        SDL_OutOfMemory();
+        return -1;
+    }
+
+    SDL_GetWindowSize(window, &w, &h);
+
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+
+    glReadPixels(rect->x, (h-rect->y)-rect->h, rect->w, rect->h,
+                       GL_RGBA, GL_UNSIGNED_BYTE, temp_pixels);
+
+    /* Flip the rows to be top-down */
+    length = rect->w * SDL_BYTESPERPIXEL(temp_format);
+    src = (Uint8*)temp_pixels + (rect->h-1)*temp_pitch;
+    dst = (Uint8*)temp_pixels;
+    tmp = SDL_stack_alloc(Uint8, length);
+    rows = rect->h / 2;
+    while (rows--) {
+        SDL_memcpy(tmp, dst, length);
+        SDL_memcpy(dst, src, length);
+        SDL_memcpy(src, tmp, length);
+        dst += temp_pitch;
+        src -= temp_pitch;
+    }
+    SDL_stack_free(tmp);
+
+    status = SDL_ConvertPixels(rect->w, rect->h,
+                               temp_format, temp_pixels, temp_pitch,
+                               pixel_format, pixels, pitch);
+    SDL_free(temp_pixels);
+
+    return status;
 }
 
 static void
@@ -1176,6 +1241,7 @@ GLES2_CreateRenderer(SDL_Window *window, Uint32 flags)
     renderer->RenderDrawLines     = &GLES2_RenderDrawLines;
     renderer->RenderFillRects     = &GLES2_RenderFillRects;
     renderer->RenderCopy          = &GLES2_RenderCopy;
+    renderer->RenderReadPixels    = &GLES2_RenderReadPixels;
     renderer->RenderPresent       = &GLES2_RenderPresent;
     renderer->DestroyTexture      = &GLES2_DestroyTexture;
     renderer->DestroyRenderer     = &GLES2_DestroyRenderer;

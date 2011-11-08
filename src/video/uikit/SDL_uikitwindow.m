@@ -20,6 +20,8 @@
 */
 #include "SDL_config.h"
 
+#if SDL_VIDEO_DRIVER_UIKIT
+
 #include "SDL_syswm.h"
 #include "SDL_video.h"
 #include "SDL_mouse.h"
@@ -67,9 +69,6 @@ static int SetupWindowData(_THIS, SDL_Window *window, UIWindow *uiwindow, SDL_bo
 
     window->driverdata = data;
 
-    // !!! FIXME: should we force this? Shouldn't specifying FULLSCREEN
-    // !!! FIXME:  imply BORDERLESS?
-    window->flags |= SDL_WINDOW_FULLSCREEN;        /* window is always fullscreen */
     window->flags |= SDL_WINDOW_SHOWN;            /* only one window on iOS, always shown */
 
     // SDL_WINDOW_BORDERLESS controls whether status bar is hidden.
@@ -82,17 +81,17 @@ static int SetupWindowData(_THIS, SDL_Window *window, UIWindow *uiwindow, SDL_bo
     } else {
         window->flags |= SDL_WINDOW_INPUT_FOCUS;  // always has input focus
 
-        if (window->flags & SDL_WINDOW_BORDERLESS) {
+        if (window->flags & (SDL_WINDOW_FULLSCREEN|SDL_WINDOW_BORDERLESS)) {
             [UIApplication sharedApplication].statusBarHidden = YES;
         } else {
             [UIApplication sharedApplication].statusBarHidden = NO;
         }
 
-        const UIDeviceOrientation o = [[UIDevice currentDevice] orientation];
-        const BOOL landscape = (o == UIDeviceOrientationLandscapeLeft) ||
-                                   (o == UIDeviceOrientationLandscapeRight);
-        const BOOL rotate = ( ((window->w > window->h) && (!landscape)) ||
-                              ((window->w < window->h) && (landscape)) );
+        //const UIDeviceOrientation o = [[UIDevice currentDevice] orientation];
+        //const BOOL landscape = (o == UIDeviceOrientationLandscapeLeft) ||
+        //                           (o == UIDeviceOrientationLandscapeRight);
+        //const BOOL rotate = ( ((window->w > window->h) && (!landscape)) ||
+        //                      ((window->w < window->h) && (landscape)) );
 
         // The View Controller will handle rotating the view when the
         //  device orientation changes. This will trigger resize events, if
@@ -165,7 +164,7 @@ UIKit_CreateWindow(_THIS, SDL_Window *window)
     /* ignore the size user requested, and make a fullscreen window */
     // !!! FIXME: can we have a smaller view?
     UIWindow *uiwindow = [UIWindow alloc];
-    if (window->flags & SDL_WINDOW_BORDERLESS)
+    if (window->flags & (SDL_WINDOW_FULLSCREEN|SDL_WINDOW_BORDERLESS))
         uiwindow = [uiwindow initWithFrame:[uiscreen bounds]];
     else
         uiwindow = [uiwindow initWithFrame:[uiscreen applicationFrame]];
@@ -214,5 +213,7 @@ UIKit_GetWindowWMInfo(_THIS, SDL_Window * window, SDL_SysWMinfo * info)
         return SDL_FALSE;
     }
 }
+
+#endif /* SDL_VIDEO_DRIVER_UIKIT */
 
 /* vi: set ts=4 sw=4 expandtab: */

@@ -20,6 +20,8 @@
 */
 #include "SDL_config.h"
 
+#if SDL_VIDEO_DRIVER_COCOA
+
 #include "SDL_cocoavideo.h"
 #include "../../events/SDL_clipboardevents_c.h"
 
@@ -94,24 +96,12 @@ Cocoa_GetClipboardText(_THIS)
 SDL_bool
 Cocoa_HasClipboardText(_THIS)
 {
-    NSAutoreleasePool *pool;
-    NSPasteboard *pasteboard;
-    NSString *format = GetTextFormat(_this);
-    NSString *available;
-    SDL_bool result;
-
-    pool = [[NSAutoreleasePool alloc] init];
-
-    pasteboard = [NSPasteboard generalPasteboard];
-    available = [pasteboard availableTypeFromArray: [NSArray arrayWithObject:format]];
-    if ([available isEqualToString:format]) {
-        result = SDL_TRUE;
-    } else {
-        result = SDL_FALSE;
+    SDL_bool result = SDL_FALSE;
+    char *text = Cocoa_GetClipboardText(_this);
+    if (text) {
+	result = (SDL_strlen(text)>0) ? SDL_TRUE : SDL_FALSE;
+	SDL_free(text);
     }
-
-    [pool release];
-
     return result;
 }
 
@@ -135,5 +125,7 @@ Cocoa_CheckClipboardUpdate(struct SDL_VideoData * data)
 
     [pool release];
 }
+
+#endif /* SDL_VIDEO_DRIVER_COCOA */
 
 /* vi: set ts=4 sw=4 expandtab: */
