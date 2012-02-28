@@ -31,7 +31,7 @@
 #include "SDL_waylandevents_c.h"
 #include "SDL_waylandwindow.h"
 
-#include <X11/extensions/XKBcommon.h>
+#include <xkbcommon/xkbcommon.h>
 #include <linux/input.h>
 
 #include "../../events/scancodes_xfree86.h"
@@ -98,15 +98,16 @@ Wayland_PumpEvents(_THIS)
 
 static void
 window_handle_motion(void *data, struct wl_input_device *input_device,
-                     uint32_t time,
-                     int32_t x, int32_t y, int32_t sx, int32_t sy)
+                     uint32_t time, int32_t sx, int32_t sy)
 {
     struct SDL_WaylandInput *input = data;
     SDL_WaylandWindow *window = input->pointer_focus;
     //int location, pointer = POINTER_LEFT_PTR;
 
-    input->x = x;
-    input->y = y;
+    /* We dont and shouldnt know them */
+    input->x = 0;
+    input->y = 0;
+
     input->sx = sx;
     input->sy = sy;
     SDL_SendMouseMotion(window->sdlwindow, 0, sx, sy);
@@ -152,7 +153,6 @@ keysym_to_utf8(uint32_t sym)
 {
     char *text = NULL;
     uint32_t inbuf[2];
-    unsigned ucs4;
 
     inbuf[0] = X11_KeySymToUcs4(sym);
     if (inbuf[0] == 0)
@@ -204,10 +204,10 @@ window_handle_key(void *data, struct wl_input_device *input_device,
 }
 
 static void
-window_handle_pointer_focus(void *data,
+window_handle_pointer_enter(void *data,
                             struct wl_input_device *input_device,
                             uint32_t time, struct wl_surface *surface,
-                            int32_t x, int32_t y, int32_t sx, int32_t sy)
+                            int32_t sx, int32_t sy)
 {
     struct SDL_WaylandInput *input = data;
     SDL_WaylandWindow *window;
@@ -221,6 +221,7 @@ window_handle_pointer_focus(void *data,
 
           set_pointer_image(input, time, pointer);*/
     } else {
+        /* FIXME: reached? */
         SDL_SetMouseFocus(NULL);
         input->pointer_focus = NULL;
         //input->current_pointer_image = POINTER_UNSET;
@@ -228,7 +229,18 @@ window_handle_pointer_focus(void *data,
 }
 
 static void
-window_handle_keyboard_focus(void *data,
+window_handle_pointer_leave(void *data,
+                            struct wl_input_device *input_device,
+                            uint32_t time, struct wl_surface *surface)
+{
+    struct SDL_WaylandInput *input = data;
+
+    SDL_SetMouseFocus(NULL);
+    input->pointer_focus = NULL;
+}
+
+static void
+window_handle_keyboard_enter(void *data,
                              struct wl_input_device *input_device,
                              uint32_t time,
                              struct wl_surface *surface,
@@ -260,13 +272,65 @@ window_handle_keyboard_focus(void *data,
     }
 
 }
+static void
+window_handle_keyboard_leave(void *data,
+                             struct wl_input_device *input_device,
+                             uint32_t time,
+                             struct wl_surface *surface)
+{
+    struct SDL_WaylandInput *input = data;
+
+    input->keyboard_focus = NULL;
+    SDL_SetKeyboardFocus(NULL);
+}
+
+static void
+input_handle_touch_down(void *data,
+                        struct wl_input_device *wl_input_device,
+                        uint32_t time, struct wl_surface *surface,
+                        int32_t id, int32_t x, int32_t y)
+{
+}
+
+static void
+input_handle_touch_up(void *data,
+                      struct wl_input_device *wl_input_device,
+                      uint32_t time, int32_t id)
+{
+}
+
+static void
+input_handle_touch_motion(void *data,
+                          struct wl_input_device *wl_input_device,
+                          uint32_t time, int32_t id, int32_t x, int32_t y)
+{
+}
+
+static void
+input_handle_touch_frame(void *data,
+                         struct wl_input_device *wl_input_device)
+{
+}
+
+static void
+input_handle_touch_cancel(void *data,
+                          struct wl_input_device *wl_input_device)
+{
+}
 
 static const struct wl_input_device_listener input_device_listener = {
     window_handle_motion,
     window_handle_button,
     window_handle_key,
-    window_handle_pointer_focus,
-    window_handle_keyboard_focus,
+    window_handle_pointer_enter,
+    window_handle_pointer_leave,
+    window_handle_keyboard_enter,
+    window_handle_keyboard_leave,
+    input_handle_touch_down,
+    input_handle_touch_up,
+    input_handle_touch_motion,
+    input_handle_touch_frame,
+    input_handle_touch_cancel,
 };
 
 void
@@ -280,7 +344,8 @@ Wayland_display_add_input(SDL_WaylandData *d, uint32_t id)
 
     memset(input, 0, sizeof *input);
     input->display = d;
-    input->input_device = wl_input_device_create(d->display, id, 1);
+    input->input_device =
+        wl_display_bind(d->display, id, &wl_input_device_interface);
     input->pointer_focus = NULL;
     input->keyboard_focus = NULL;
 

@@ -120,32 +120,39 @@ static void
 display_handle_geometry(void *data,
                         struct wl_output *output,
                         int32_t x, int32_t y,
-                        int32_t width, int32_t height)
+                        int physical_width,
+                        int physical_height,
+                        int subpixel,
+                        const char *make,
+                        const char *model)
+
 {
     SDL_WaylandData *d = data;
 
     d->screen_allocation.x = x;
     d->screen_allocation.y = y;
-    d->screen_allocation.width = width;
-    d->screen_allocation.height = height;
+}
+
+static void
+display_handle_mode(void *data,
+		    struct wl_output *wl_output,
+		    uint32_t flags,
+		    int width,
+		    int height,
+		    int refresh)
+{
+    SDL_WaylandData *d = data;
+
+    if (flags & WL_OUTPUT_MODE_CURRENT) {
+        d->screen_allocation.width = width;
+        d->screen_allocation.height = height;
+    }
 }
 
 
 static const struct wl_output_listener output_listener = {
     display_handle_geometry,
-};
-
-static void
-handle_configure(void *data, struct wl_shell *shell,
-                 uint32_t time, uint32_t edges,
-                 struct wl_surface *surface,
-                 int32_t width, int32_t height)
-{
-
-}
-
-static const struct wl_shell_listener shell_listener = {
-    handle_configure,
+    display_handle_mode
 };
 
 static void
@@ -155,15 +162,14 @@ display_handle_global(struct wl_display *display, uint32_t id,
     SDL_WaylandData *d = data;
 
     if (strcmp(interface, "wl_compositor") == 0) {
-        d->compositor = wl_compositor_create(display, id, 1);
+        d->compositor = wl_display_bind(display, id, &wl_compositor_interface);
     } else if (strcmp(interface, "wl_output") == 0) {
-        d->output = wl_output_create(display, id, 1);
+        d->output = wl_display_bind(display, id, &wl_output_interface);
         wl_output_add_listener(d->output, &output_listener, d);
     } else if (strcmp(interface, "wl_input_device") == 0) {
         Wayland_display_add_input(d, id);
     } else if (strcmp(interface, "wl_shell") == 0) {
-        d->shell = wl_shell_create(display, id, 1);
-        wl_shell_add_listener(d->shell, &shell_listener, d);
+        d->shell = wl_display_bind(display, id, &wl_shell_interface);
     }
 }
 

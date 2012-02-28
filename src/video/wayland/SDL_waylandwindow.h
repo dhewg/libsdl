@@ -34,6 +34,7 @@ typedef struct
     SDL_Window *sdlwindow;
     SDL_WaylandData *waylandData;
     struct wl_surface	*surface;
+    struct wl_shell_surface *shell_surface;
     struct wl_egl_window *egl_window;
     EGLSurface esurf;
 

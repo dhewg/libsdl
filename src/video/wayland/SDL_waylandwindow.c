@@ -33,9 +33,11 @@ void Wayland_ShowWindow(_THIS, SDL_Window * window)
 
     printf("sow window: %d,%d\n", window->w, window->h);
     if (window->flags & SDL_WINDOW_FULLSCREEN)
-        wl_surface_map_fullscreen(wind->surface);
+        wl_shell_surface_set_fullscreen(wind->shell_surface,
+                                        WL_SHELL_SURFACE_FULLSCREEN_METHOD_DEFAULT,
+                                        0, NULL);
     else
-        wl_surface_map_toplevel(wind->surface);
+        wl_shell_surface_set_toplevel(wind->shell_surface);
     /*
        wl_surface_map(wind->surface,
        window->x, window->y,
@@ -49,8 +51,6 @@ void Wayland_ShowWindow(_THIS, SDL_Window * window)
 int Wayland_CreateWindow(_THIS, SDL_Window * window)
 {
     SDL_WaylandWindow *data;
-    struct wl_visual *visual;
-    int i;
     SDL_WaylandData *c;
 
     data = malloc(sizeof *data);
@@ -78,13 +78,11 @@ int Wayland_CreateWindow(_THIS, SDL_Window * window)
     data->surface =
         wl_compositor_create_surface(c->compositor);
     wl_surface_set_user_data(data->surface, data);
+    data->shell_surface = wl_shell_get_shell_surface(c->shell,
+                                                     data->surface);
 
-    if (_this->gl_config.alpha_size == 0)
-        visual = wl_display_get_rgb_visual(c->display);
-    else
-        visual = wl_display_get_premultiplied_argb_visual(c->display);
     data->egl_window = wl_egl_window_create(data->surface,
-                                            window->w, window->h, visual);
+                                            window->w, window->h);
     data->esurf =
         eglCreateWindowSurface(c->edpy, c->econf,
                                data->egl_window, NULL);
@@ -107,7 +105,6 @@ void Wayland_DestroyWindow(_THIS, SDL_Window * window)
     SDL_WaylandWindow *wind = (SDL_WaylandWindow *) window->driverdata;
 
     window->driverdata = NULL;
-    int i;
 
     if (data) {
         eglDestroySurface(data->edpy, wind->esurf);
