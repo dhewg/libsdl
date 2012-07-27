@@ -86,57 +86,6 @@ Wayland_PumpEvents(_THIS)
     } while (retval > 0);
 }
 
-#if 0
-static void
-input_handle_touch_down(void *data,
-                        struct wl_input_device *wl_input_device,
-                        uint32_t time, struct wl_surface *surface,
-                        int32_t id, int32_t x, int32_t y)
-{
-}
-
-static void
-input_handle_touch_up(void *data,
-                      struct wl_input_device *wl_input_device,
-                      uint32_t time, int32_t id)
-{
-}
-
-static void
-input_handle_touch_motion(void *data,
-                          struct wl_input_device *wl_input_device,
-                          uint32_t time, int32_t id, int32_t x, int32_t y)
-{
-}
-
-static void
-input_handle_touch_frame(void *data,
-                         struct wl_input_device *wl_input_device)
-{
-}
-
-static void
-input_handle_touch_cancel(void *data,
-                          struct wl_input_device *wl_input_device)
-{
-}
-
-static const struct wl_input_device_listener input_device_listener = {
-    window_handle_motion,
-    window_handle_button,
-    window_handle_key,
-    window_handle_pointer_enter,
-    window_handle_pointer_leave,
-    window_handle_keyboard_enter,
-    window_handle_keyboard_leave,
-    input_handle_touch_down,
-    input_handle_touch_up,
-    input_handle_touch_motion,
-    input_handle_touch_frame,
-    input_handle_touch_cancel,
-};
-#endif
-
 static void
 pointer_handle_enter(void *data, struct wl_pointer *pointer,
                      uint32_t serial, struct wl_surface *surface,
