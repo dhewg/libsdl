@@ -43,6 +43,16 @@ typedef uint32_t KeySym;
 
 #include <sys/select.h>
 
+struct SDL_WaylandInput {
+    SDL_WaylandData *display;
+    struct wl_input_device *input_device;
+    SDL_WaylandWindow *pointer_focus;
+    SDL_WaylandWindow *keyboard_focus;
+    uint32_t current_pointer_image;
+    uint32_t modifiers;
+    int32_t x, y, sx, sy;
+};
+
 const char *option_xkb_layout = "de";
 const char *option_xkb_variant = "nodeadkeys";
 const char *option_xkb_options = "";

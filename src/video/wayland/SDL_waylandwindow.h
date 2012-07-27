@@ -29,6 +29,8 @@
 
 #include "SDL_waylandvideo.h"
 
+struct SDL_WaylandInput;
+
 typedef struct {
     SDL_Window *sdlwindow;
     SDL_WaylandData *waylandData;

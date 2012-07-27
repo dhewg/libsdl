@@ -28,16 +28,6 @@
 #include "SDL_waylandvideo.h"
 #include "SDL_waylandwindow.h"
 
-struct SDL_WaylandInput {
-    SDL_WaylandData *display;
-    struct wl_input_device *input_device;
-    SDL_WaylandWindow *pointer_focus;
-    SDL_WaylandWindow *keyboard_focus;
-    uint32_t current_pointer_image;
-    uint32_t modifiers;
-    int32_t x, y, sx, sy;
-};
-
 extern void Wayland_init_xkb(SDL_WaylandData *d);
 
 extern void Wayland_PumpEvents(_THIS);
