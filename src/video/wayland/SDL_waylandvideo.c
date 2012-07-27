@@ -115,12 +115,13 @@ VideoBootStrap Wayland_bootstrap = {
 static void
 display_handle_geometry(void *data,
                         struct wl_output *output,
-                        int32_t x, int32_t y,
+                        int x, int y,
                         int physical_width,
                         int physical_height,
                         int subpixel,
                         const char *make,
-                        const char *model)
+                        const char *model,
+                        int transform)
 
 {
     SDL_WaylandData *d = data;
