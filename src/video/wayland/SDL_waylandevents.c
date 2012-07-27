@@ -45,7 +45,7 @@ typedef uint32_t KeySym;
 
 struct SDL_WaylandInput {
     SDL_WaylandData *display;
-    struct wl_input_device *input_device;
+    struct wl_seat *seat;
     SDL_WaylandWindow *pointer_focus;
     SDL_WaylandWindow *keyboard_focus;
     uint32_t current_pointer_image;
@@ -319,10 +319,19 @@ static const struct wl_input_device_listener input_device_listener = {
 };
 #endif
 
+static void
+seat_handle_capabilities(void *data, struct wl_seat *seat,
+                         enum wl_seat_capability caps)
+{
+}
+
+static const struct wl_seat_listener seat_listener = {
+    seat_handle_capabilities,
+};
+
 void
 Wayland_display_add_input(SDL_WaylandData *d, uint32_t id)
 {
-#if 0
     struct SDL_WaylandInput *input;
 
     input = malloc(sizeof *input);
@@ -331,17 +340,14 @@ Wayland_display_add_input(SDL_WaylandData *d, uint32_t id)
 
     memset(input, 0, sizeof *input);
     input->display = d;
-    input->input_device =
-        wl_display_bind(d->display, id, &wl_input_device_interface);
+    input->seat = wl_display_bind(d->display, id, &wl_seat_interface);
     input->pointer_focus = NULL;
     input->keyboard_focus = NULL;
 
-    wl_input_device_add_listener(input->input_device,
-                                 &input_device_listener, input);
-    wl_input_device_set_user_data(input->input_device, input);
+    wl_seat_add_listener(input->seat, &seat_listener, input);
+    wl_seat_set_user_data(input->seat, input);
 
     wayland_schedule_write(d);
-#endif
 }
 
 /* vi: set ts=4 sw=4 expandtab: */
