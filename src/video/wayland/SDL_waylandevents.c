@@ -47,6 +47,7 @@ struct SDL_WaylandInput {
     SDL_WaylandData *display;
     struct wl_seat *seat;
     struct wl_pointer *pointer;
+    struct wl_keyboard *keyboard;
     SDL_WaylandWindow *pointer_focus;
     SDL_WaylandWindow *keyboard_focus;
     uint32_t modifiers;
@@ -318,6 +319,48 @@ static const struct wl_pointer_listener pointer_listener = {
 };
 
 static void
+keyboard_handle_keymap(void *data, struct wl_keyboard *keyboard,
+                       uint32_t format, int fd, uint32_t size)
+{
+}
+
+static void
+keyboard_handle_enter(void *data, struct wl_keyboard *keyboard,
+                      uint32_t serial, struct wl_surface *surface,
+                      struct wl_array *keys)
+{
+}
+
+static void
+keyboard_handle_leave(void *data, struct wl_keyboard *keyboard,
+                      uint32_t serial, struct wl_surface *surface)
+{
+}
+
+static void
+keyboard_handle_key(void *data, struct wl_keyboard *keyboard,
+                    uint32_t serial, uint32_t time, uint32_t key,
+                    uint32_t state_w)
+{
+}
+
+static void
+keyboard_handle_modifiers(void *data, struct wl_keyboard *keyboard,
+                          uint32_t serial, uint32_t mods_depressed,
+                          uint32_t mods_latched, uint32_t mods_locked,
+                          uint32_t group)
+{
+}
+
+static const struct wl_keyboard_listener keyboard_listener = {
+    keyboard_handle_keymap,
+    keyboard_handle_enter,
+    keyboard_handle_leave,
+    keyboard_handle_key,
+    keyboard_handle_modifiers,
+};
+
+static void
 seat_handle_capabilities(void *data, struct wl_seat *seat,
                          enum wl_seat_capability caps)
 {
@@ -331,6 +374,16 @@ seat_handle_capabilities(void *data, struct wl_seat *seat,
     } else if (!(caps & WL_SEAT_CAPABILITY_POINTER) && input->pointer) {
         wl_pointer_destroy(input->pointer);
         input->pointer = NULL;
+    }
+
+    if ((caps & WL_SEAT_CAPABILITY_KEYBOARD) && !input->keyboard) {
+        input->keyboard = wl_seat_get_keyboard(seat);
+        wl_keyboard_set_user_data(input->keyboard, input);
+        wl_keyboard_add_listener(input->keyboard, &keyboard_listener,
+                                 input);
+    } else if (!(caps & WL_SEAT_CAPABILITY_KEYBOARD) && input->keyboard) {
+        wl_keyboard_destroy(input->keyboard);
+        input->keyboard = NULL;
     }
 }
 
