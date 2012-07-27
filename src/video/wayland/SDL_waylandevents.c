@@ -52,7 +52,6 @@ struct SDL_WaylandInput {
     struct wl_keyboard *keyboard;
     SDL_WaylandWindow *pointer_focus;
     SDL_WaylandWindow *keyboard_focus;
-    uint32_t modifiers;
 
     struct {
         struct xkb_keymap *keymap;
@@ -88,106 +87,6 @@ Wayland_PumpEvents(_THIS)
 }
 
 #if 0
-static char *
-keysym_to_utf8(uint32_t sym)
-{
-    char *text = NULL;
-    uint32_t inbuf[2];
-
-    inbuf[0] = X11_KeySymToUcs4(sym);
-    if (inbuf[0] == 0)
-        return NULL;
-    inbuf[1] = 0;
-
-    text = SDL_iconv_string("UTF-8", "UCS-4",
-                            (const char *) inbuf, sizeof inbuf);
-
-    return text;
-}
-
-static void
-window_handle_key(void *data, struct wl_input_device *input_device,
-                  uint32_t time, uint32_t key, uint32_t state)
-{
-    struct SDL_WaylandInput *input = data;
-    SDL_WaylandWindow *window = input->keyboard_focus;
-    SDL_WaylandData *d = window->waylandData;
-    uint32_t code, sym, level = 0;
-    char *text;
-
-    code = key + d->xkb->min_key_code;
-    if (window->keyboard_device != input)
-        return;
-
-    SDL_assert(key < d->input_table_size);
-    SDL_SendKeyboardKey(state ? SDL_PRESSED:SDL_RELEASED, d->input_table[key]);
-
-    level = 0;
-    if (input->modifiers & XKB_COMMON_SHIFT_MASK &&
-        XkbKeyGroupWidth(d->xkb, code, 0) > 1)
-        level = 1;
-
-    sym = XkbKeySymEntry(d->xkb, code, level, 0);
-
-    if (state) {
-        text = keysym_to_utf8(sym);
-        if (text != NULL) {
-            SDL_SendKeyboardText(text);
-            SDL_free(text);
-        }
-    }
-
-    if (state)
-        input->modifiers |= d->xkb->map->modmap[code];
-    else
-        input->modifiers &= ~d->xkb->map->modmap[code];
-}
-
-static void
-window_handle_keyboard_enter(void *data,
-                             struct wl_input_device *input_device,
-                             uint32_t time,
-                             struct wl_surface *surface,
-                             struct wl_array *keys)
-{
-    struct SDL_WaylandInput *input = data;
-    SDL_WaylandWindow *window = input->keyboard_focus;
-    SDL_WaylandData *d = input->display;
-    uint32_t *k, *end;
-
-    if (window)
-        window->keyboard_device = NULL;
-
-    if (surface)
-        input->keyboard_focus = wl_surface_get_user_data(surface);
-    else
-        input->keyboard_focus = NULL;
-
-    end = keys->data + keys->size;
-    for (k = keys->data; k < end; k++)
-        input->modifiers |= d->xkb->map->modmap[*k];
-
-    window = input->keyboard_focus;
-    if (window){
-        window->keyboard_device = input;
-        SDL_SetKeyboardFocus(window->sdlwindow);
-    }else{
-        SDL_SetKeyboardFocus(NULL);
-    }
-
-}
-static void
-window_handle_keyboard_leave(void *data,
-                             struct wl_input_device *input_device,
-                             uint32_t time,
-                             struct wl_surface *surface)
-{
-    struct SDL_WaylandInput *input = data;
-
-    input->keyboard_focus = NULL;
-    SDL_SetKeyboardFocus(NULL);
-}
-
 static void
 input_handle_touch_down(void *data,
                         struct wl_input_device *wl_input_device,
@@ -374,12 +273,21 @@ keyboard_handle_enter(void *data, struct wl_keyboard *keyboard,
                       uint32_t serial, struct wl_surface *surface,
                       struct wl_array *keys)
 {
+    struct SDL_WaylandInput *input = data;
+    SDL_WaylandWindow *window = input->keyboard_focus;
+
+    input->keyboard_focus = wl_surface_get_user_data(surface);
+
+    window = input->keyboard_focus;
+    window->keyboard_device = input;
+    SDL_SetKeyboardFocus(window->sdlwindow);
 }
 
 static void
 keyboard_handle_leave(void *data, struct wl_keyboard *keyboard,
                       uint32_t serial, struct wl_surface *surface)
 {
+    SDL_SetKeyboardFocus(NULL);
 }
 
 static void
@@ -387,6 +295,37 @@ keyboard_handle_key(void *data, struct wl_keyboard *keyboard,
                     uint32_t serial, uint32_t time, uint32_t key,
                     uint32_t state_w)
 {
+    struct SDL_WaylandInput *input = data;
+    SDL_WaylandWindow *window = input->keyboard_focus;
+    enum wl_keyboard_key_state state = state_w;
+    const xkb_keysym_t *syms;
+    uint32_t scancode;
+    char text[8];
+
+    if (key < SDL_arraysize(xfree86_scancode_table2)) {
+        scancode = xfree86_scancode_table2[key];
+
+        // TODO when do we get WL_KEYBOARD_KEY_STATE_REPEAT?
+        if (scancode != SDL_SCANCODE_UNKNOWN)
+            SDL_SendKeyboardKey(state == WL_KEYBOARD_KEY_STATE_PRESSED ?
+                                SDL_PRESSED : SDL_RELEASED, scancode);
+    }
+
+    if (!window || window->keyboard_device != input || !input->xkb.state)
+        return;
+
+    // TODO can this happen?
+    if (xkb_key_get_syms(input->xkb.state, key + 8, &syms) != 1)
+        return;
+
+    if (state) {
+        int size = xkb_keysym_to_utf8(syms[0], text, sizeof text);
+
+        if (size > 0) {
+            text[size] = 0;
+            SDL_SendKeyboardText(text);
+        }
+    }
 }
 
 static void
@@ -395,6 +334,10 @@ keyboard_handle_modifiers(void *data, struct wl_keyboard *keyboard,
                           uint32_t mods_latched, uint32_t mods_locked,
                           uint32_t group)
 {
+    struct SDL_WaylandInput *input = data;
+
+    xkb_state_update_mask(input->xkb.state, mods_depressed, mods_latched,
+                          mods_locked, 0, 0, group);
 }
 
 static const struct wl_keyboard_listener keyboard_listener = {
