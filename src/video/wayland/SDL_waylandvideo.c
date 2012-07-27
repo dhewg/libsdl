@@ -52,11 +52,7 @@ static int
 Wayland_Available(void)
 {
     const char *envr = SDL_getenv("SDL_VIDEODRIVER");
-    if ((envr) && (SDL_strcmp(envr, WAYLANDVID_DRIVER_NAME) == 0)) {
-        return (1);
-    }
-
-    return (0);
+    return envr && SDL_strcmp(envr, WAYLANDVID_DRIVER_NAME) == 0;
 }
 
 static void
