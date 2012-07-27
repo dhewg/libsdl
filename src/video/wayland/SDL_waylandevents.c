@@ -49,9 +49,7 @@ struct SDL_WaylandInput {
     struct wl_pointer *pointer;
     SDL_WaylandWindow *pointer_focus;
     SDL_WaylandWindow *keyboard_focus;
-    uint32_t current_pointer_image;
     uint32_t modifiers;
-    int32_t x, y, sx, sy;
 };
 
 void
@@ -82,58 +80,6 @@ Wayland_PumpEvents(_THIS)
 }
 
 #if 0
-static void
-window_handle_motion(void *data, struct wl_input_device *input_device,
-                     uint32_t time, int32_t sx, int32_t sy)
-{
-    struct SDL_WaylandInput *input = data;
-    SDL_WaylandWindow *window = input->pointer_focus;
-    //int location, pointer = POINTER_LEFT_PTR;
-
-    /* We dont and shouldnt know them */
-    input->x = 0;
-    input->y = 0;
-
-    input->sx = sx;
-    input->sy = sy;
-    SDL_SendMouseMotion(window->sdlwindow, 0, sx, sy);
-    //location = get_pointer_location(window, input->sx, input->sy);
-
-    //set_pointer_image(input, time, pointer);
-}
-
-static void
-window_handle_button(void *data,
-                     struct wl_input_device *input_device,
-                     uint32_t time, uint32_t button, uint32_t state)
-{
-    struct SDL_WaylandInput *input = data;
-    SDL_WaylandWindow *window = input->pointer_focus;
-    uint32_t sdl_button;
-
-    switch (button) {
-    case BTN_LEFT:
-    default:
-        sdl_button = SDL_BUTTON_LEFT;
-        break;
-    case BTN_MIDDLE:
-        sdl_button = SDL_BUTTON_MIDDLE;
-        break;
-    case BTN_RIGHT:
-        sdl_button = SDL_BUTTON_RIGHT;
-        break;
-    case BTN_SIDE:
-        sdl_button = SDL_BUTTON_X1;
-        break;
-    case BTN_EXTRA:
-        sdl_button = SDL_BUTTON_X2;
-        break;
-    }
-
-    SDL_SendMouseButton(window->sdlwindow,
-                        state ? SDL_PRESSED : SDL_RELEASED, sdl_button);
-}
-
 static char *
 keysym_to_utf8(uint32_t sym)
 {
@@ -187,42 +133,6 @@ window_handle_key(void *data, struct wl_input_device *input_device,
         input->modifiers |= d->xkb->map->modmap[code];
     else
         input->modifiers &= ~d->xkb->map->modmap[code];
-}
-
-static void
-window_handle_pointer_enter(void *data,
-                            struct wl_input_device *input_device,
-                            uint32_t time, struct wl_surface *surface,
-                            int32_t sx, int32_t sy)
-{
-    struct SDL_WaylandInput *input = data;
-    SDL_WaylandWindow *window;
-    /*int pointer;*/
-
-    if (surface) {
-        input->pointer_focus = wl_surface_get_user_data(surface);
-        window = input->pointer_focus;
-        SDL_SetMouseFocus(window->sdlwindow);
-        /*pointer = POINTER_LEFT_PTR;
-
-          set_pointer_image(input, time, pointer);*/
-    } else {
-        /* FIXME: reached? */
-        SDL_SetMouseFocus(NULL);
-        input->pointer_focus = NULL;
-        //input->current_pointer_image = POINTER_UNSET;
-    }
-}
-
-static void
-window_handle_pointer_leave(void *data,
-                            struct wl_input_device *input_device,
-                            uint32_t time, struct wl_surface *surface)
-{
-    struct SDL_WaylandInput *input = data;
-
-    SDL_SetMouseFocus(NULL);
-    input->pointer_focus = NULL;
 }
 
 static void
@@ -325,24 +235,72 @@ pointer_handle_enter(void *data, struct wl_pointer *pointer,
                      uint32_t serial, struct wl_surface *surface,
                      wl_fixed_t sx_w, wl_fixed_t sy_w)
 {
+    struct SDL_WaylandInput *input = data;
+    SDL_WaylandWindow *window;
+
+    if (!surface) {
+        /* enter event for a window we've just destroyed */
+        return;
+    }
+
+    input->pointer_focus = wl_surface_get_user_data(surface);
+    window = input->pointer_focus;
+    SDL_SetMouseFocus(window->sdlwindow);
 }
 
 static void
 pointer_handle_leave(void *data, struct wl_pointer *pointer,
                      uint32_t serial, struct wl_surface *surface)
 {
+    struct SDL_WaylandInput *input = data;
+
+    SDL_SetMouseFocus(NULL);
+    input->pointer_focus = NULL;
 }
 
 static void
 pointer_handle_motion(void *data, struct wl_pointer *pointer,
                       uint32_t time, wl_fixed_t sx_w, wl_fixed_t sy_w)
 {
+    struct SDL_WaylandInput *input = data;
+    SDL_WaylandWindow *window = input->pointer_focus;
+    int sx = wl_fixed_to_int(sx_w);
+    int sy = wl_fixed_to_int(sy_w);
+
+    SDL_SendMouseMotion(window->sdlwindow, 0, sx, sy);
 }
 
 static void
 pointer_handle_button(void *data, struct wl_pointer *pointer, uint32_t serial,
                       uint32_t time, uint32_t button, uint32_t state_w)
 {
+    struct SDL_WaylandInput *input = data;
+    SDL_WaylandWindow *window = input->pointer_focus;
+    enum wl_pointer_button_state state = state_w;
+    uint32_t sdl_button;
+
+    switch (button) {
+    case BTN_LEFT:
+        sdl_button = SDL_BUTTON_LEFT;
+        break;
+    case BTN_MIDDLE:
+        sdl_button = SDL_BUTTON_MIDDLE;
+        break;
+    case BTN_RIGHT:
+        sdl_button = SDL_BUTTON_RIGHT;
+        break;
+    case BTN_SIDE:
+        sdl_button = SDL_BUTTON_X1;
+        break;
+    case BTN_EXTRA:
+        sdl_button = SDL_BUTTON_X2;
+        break;
+    default:
+        return;
+    }
+
+    SDL_SendMouseButton(window->sdlwindow,
+                        state ? SDL_PRESSED : SDL_RELEASED, sdl_button);
 }
 
 static void
