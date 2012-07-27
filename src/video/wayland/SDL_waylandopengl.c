@@ -31,7 +31,7 @@
 void
 Wayland_GL_SwapWindow(_THIS, SDL_Window *window)
 {
-    SDL_WaylandWindow *wind = (SDL_WaylandWindow *) window->driverdata;
+    SDL_WaylandWindow *wind = window->driverdata;
     SDL_WaylandData *data = _this->driverdata;
 
     eglSwapBuffers(data->edpy, wind->esurf);
@@ -136,7 +136,7 @@ int
 Wayland_GL_MakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context)
 {
     SDL_WaylandData *data = _this->driverdata;
-    SDL_WaylandWindow *wind = (SDL_WaylandWindow *) window->driverdata;
+    SDL_WaylandWindow *wind = window->driverdata;
 
     if (!eglMakeCurrent(data->edpy, wind->esurf, wind->esurf,
                         data->context)) {

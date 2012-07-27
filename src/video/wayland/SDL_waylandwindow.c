@@ -53,7 +53,7 @@ static const struct wl_shell_surface_listener shell_surface_listener = {
 
 void Wayland_ShowWindow(_THIS, SDL_Window *window)
 {
-    SDL_WaylandWindow *wind = (SDL_WaylandWindow*) window->driverdata;
+    SDL_WaylandWindow *wind = window->driverdata;
 
     if (window->flags & SDL_WINDOW_FULLSCREEN)
         wl_shell_surface_set_fullscreen(wind->shell_surface,
@@ -62,7 +62,7 @@ void Wayland_ShowWindow(_THIS, SDL_Window *window)
     else
         wl_shell_surface_set_toplevel(wind->shell_surface);
 
-    wayland_schedule_write((SDL_WaylandData *) _this->driverdata);
+    wayland_schedule_write(_this->driverdata);
 }
 
 int Wayland_CreateWindow(_THIS, SDL_Window *window)
@@ -122,8 +122,8 @@ int Wayland_CreateWindow(_THIS, SDL_Window *window)
 
 void Wayland_DestroyWindow(_THIS, SDL_Window *window)
 {
-    SDL_WaylandData *data = (SDL_WaylandData *) _this->driverdata;
-    SDL_WaylandWindow *wind = (SDL_WaylandWindow *) window->driverdata;
+    SDL_WaylandData *data = _this->driverdata;
+    SDL_WaylandWindow *wind = window->driverdata;
 
     window->driverdata = NULL;
 
