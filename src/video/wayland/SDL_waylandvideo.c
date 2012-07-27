@@ -164,7 +164,7 @@ display_handle_global(struct wl_display *display, uint32_t id,
     } else if (strcmp(interface, "wl_output") == 0) {
         d->output = wl_display_bind(display, id, &wl_output_interface);
         wl_output_add_listener(d->output, &output_listener, d);
-    } else if (strcmp(interface, "wl_input_device") == 0) {
+    } else if (strcmp(interface, "wl_seat") == 0) {
         Wayland_display_add_input(d, id);
     } else if (strcmp(interface, "wl_shell") == 0) {
         d->shell = wl_display_bind(display, id, &wl_shell_interface);
