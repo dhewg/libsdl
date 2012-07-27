@@ -91,26 +91,7 @@ Wayland_GL_LoadLibrary(_THIS, const char *path)
 void *
 Wayland_GL_GetProcAddress(_THIS, const char *proc)
 {
-    static char procname[1024];
-    void *handle;
-    void *retval;
-
-    handle = _this->gl_config.dll_handle;
-    retval = eglGetProcAddress(proc);
-    if (retval) {
-        return retval;
-    }
-
-#if defined(__OpenBSD__) && !defined(__ELF__)
-#undef dlsym(x,y);
-#endif
-    retval = dlsym(handle, proc);
-    if (!retval && strlen(proc) <= 1022) {
-        procname[0] = '_';
-        strcpy(procname + 1, proc);
-        retval = dlsym(handle, procname);
-    }
-    return retval;
+    return eglGetProcAddress(proc);
 }
 
 void
