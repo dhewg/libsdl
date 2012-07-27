@@ -154,8 +154,6 @@ Wayland_GL_CreateContext(_THIS, SDL_Window *window)
 int
 Wayland_GL_MakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context)
 {
-    printf("Wayland_GL_MakeCurrent\n");
-
     SDL_WaylandData *data = _this->driverdata;
     SDL_WaylandWindow *wind = (SDL_WaylandWindow *) window->driverdata;
 

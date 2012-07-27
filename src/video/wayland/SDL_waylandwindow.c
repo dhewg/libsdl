@@ -55,7 +55,6 @@ void Wayland_ShowWindow(_THIS, SDL_Window *window)
 {
     SDL_WaylandWindow *wind = (SDL_WaylandWindow*) window->driverdata;
 
-    printf("sow window: %d,%d\n", window->w, window->h);
     if (window->flags & SDL_WINDOW_FULLSCREEN)
         wl_shell_surface_set_fullscreen(wind->shell_surface,
                                         WL_SHELL_SURFACE_FULLSCREEN_METHOD_DEFAULT,
@@ -118,8 +117,6 @@ int Wayland_CreateWindow(_THIS, SDL_Window *window)
 
     wayland_schedule_write(c);
 
-    printf("created window\n");
-
     return 0;
 }
 
@@ -137,8 +134,6 @@ void Wayland_DestroyWindow(_THIS, SDL_Window *window)
         SDL_free(wind);
         wayland_schedule_write(data);
     }
-
-    printf("destroyed window\n");
 }
 
 /* vi: set ts=4 sw=4 expandtab: */
