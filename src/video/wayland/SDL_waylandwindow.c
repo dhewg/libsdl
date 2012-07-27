@@ -62,11 +62,6 @@ void Wayland_ShowWindow(_THIS, SDL_Window *window)
                                         0, NULL);
     else
         wl_shell_surface_set_toplevel(wind->shell_surface);
-    /*
-       wl_surface_map(wind->surface,
-       window->x, window->y,
-       window->w, window->h);
-       */
 
     wayland_schedule_write((SDL_WaylandData *) _this->driverdata);
 }
