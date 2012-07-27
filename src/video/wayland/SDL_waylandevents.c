@@ -50,6 +50,7 @@ const char *option_xkb_options = "";
 void
 Wayland_init_xkb(SDL_WaylandData *d)
 {
+#if 0
     struct xkb_rule_names names;
 
     names.rules = "evdev";
@@ -66,6 +67,7 @@ Wayland_init_xkb(SDL_WaylandData *d)
 
     d->input_table = xfree86_scancode_table2;
     d->input_table_size = SDL_arraysize(xfree86_scancode_table2);
+#endif
 }
 
 void
@@ -95,6 +97,7 @@ Wayland_PumpEvents(_THIS)
     } while (retval > 0);
 }
 
+#if 0
 static void
 window_handle_motion(void *data, struct wl_input_device *input_device,
                      uint32_t time, int32_t sx, int32_t sy)
@@ -331,10 +334,12 @@ static const struct wl_input_device_listener input_device_listener = {
     input_handle_touch_frame,
     input_handle_touch_cancel,
 };
+#endif
 
 void
 Wayland_display_add_input(SDL_WaylandData *d, uint32_t id)
 {
+#if 0
     struct SDL_WaylandInput *input;
 
     input = malloc(sizeof *input);
@@ -353,6 +358,7 @@ Wayland_display_add_input(SDL_WaylandData *d, uint32_t id)
     wl_input_device_set_user_data(input->input_device, input);
 
     wayland_schedule_write(d);
+#endif
 }
 
 /* vi: set ts=4 sw=4 expandtab: */
