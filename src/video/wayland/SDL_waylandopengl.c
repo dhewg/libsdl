@@ -66,7 +66,7 @@ Wayland_GL_LoadLibrary(_THIS, const char *path)
     data->edpy = eglGetDisplay(data->display);
 
     if (!eglInitialize(data->edpy, &major, &minor)) {
-        SDL_SetError("failed to initialize display\n");
+        SDL_SetError("failed to initialize display");
         return -1;
     }
 
@@ -74,11 +74,11 @@ Wayland_GL_LoadLibrary(_THIS, const char *path)
 
     if (!eglChooseConfig(data->edpy, config_attribs,
                          &data->econf, 1, &num_config)) {
-        SDL_SetError("failed to choose a config\n");
+        SDL_SetError("failed to choose a config");
         return -1;
     }
     if (num_config != 1) {
-        SDL_SetError("failed to choose a config\n");
+        SDL_SetError("failed to choose a config");
         return -1;
     }
     Wayland_PumpEvents(_this);

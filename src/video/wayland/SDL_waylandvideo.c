@@ -190,7 +190,7 @@ Wayland_VideoInit(_THIS)
 
     data->display = wl_display_connect(NULL);
     if (data->display == NULL) {
-        SDL_SetError("Failed to connecto to a Wayland display.");
+        SDL_SetError("Failed to connect to a Wayland display");
         return 0;
     }
 

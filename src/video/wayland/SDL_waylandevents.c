@@ -73,7 +73,7 @@ Wayland_PumpEvents(_THIS)
 
         retval = select(d->event_fd + 1, &rfds, NULL, NULL, &tv);
         if (retval < 0) {
-            SDL_SetError("select faild: %s\n", strerror(errno));
+            SDL_SetError("select failed: %m");
             break;
         }
         if (retval == 1)
