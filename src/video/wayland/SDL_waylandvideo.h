@@ -34,9 +34,7 @@
 #include <EGL/egl.h>
 #include <GL/gl.h>
 
-
-typedef struct
-{
+typedef struct {
     struct wl_display *display;
     struct wl_compositor *compositor;
     struct wl_output *output;
@@ -53,7 +51,7 @@ typedef struct
     struct xkb_desc *xkb;
 
     int event_fd;
-    int event_mask; 
+    int event_mask;
 
     int schedule_write;
 

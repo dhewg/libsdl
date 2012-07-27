@@ -26,8 +26,7 @@
 #include "SDL_waylandwindow.h"
 #include "SDL_waylandvideo.h"
 
-
-void Wayland_ShowWindow(_THIS, SDL_Window * window)
+void Wayland_ShowWindow(_THIS, SDL_Window *window)
 {
     SDL_WaylandWindow *wind = (SDL_WaylandWindow*) window->driverdata;
 
@@ -47,8 +46,7 @@ void Wayland_ShowWindow(_THIS, SDL_Window * window)
     wayland_schedule_write((SDL_WaylandData *) _this->driverdata);
 }
 
-
-int Wayland_CreateWindow(_THIS, SDL_Window * window)
+int Wayland_CreateWindow(_THIS, SDL_Window *window)
 {
     SDL_WaylandWindow *data;
     SDL_WaylandData *c;
@@ -99,7 +97,7 @@ int Wayland_CreateWindow(_THIS, SDL_Window * window)
     return 0;
 }
 
-void Wayland_DestroyWindow(_THIS, SDL_Window * window)
+void Wayland_DestroyWindow(_THIS, SDL_Window *window)
 {
     SDL_WaylandData *data = (SDL_WaylandData *) _this->driverdata;
     SDL_WaylandWindow *wind = (SDL_WaylandWindow *) window->driverdata;

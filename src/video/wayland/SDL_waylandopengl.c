@@ -28,7 +28,7 @@
 #include <dlfcn.h>
 
 void
-Wayland_GL_SwapWindow(_THIS, SDL_Window * window)
+Wayland_GL_SwapWindow(_THIS, SDL_Window *window)
 {
     SDL_WaylandWindow *wind = (SDL_WaylandWindow *) window->driverdata;
     SDL_WaylandData *data = _this->driverdata;
@@ -130,7 +130,7 @@ Wayland_GL_UnloadLibrary(_THIS)
 }
 
 SDL_GLContext
-Wayland_GL_CreateContext(_THIS, SDL_Window * window)
+Wayland_GL_CreateContext(_THIS, SDL_Window *window)
 {
     SDL_WaylandData *data = _this->driverdata;
 

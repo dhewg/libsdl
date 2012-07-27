@@ -34,7 +34,6 @@
 #include "SDL_waylandwindow.h"
 #include "SDL_waylandopengl.h"
 
-
 #define WAYLANDVID_DRIVER_NAME "wayland"
 
 /* Initialization/Query functions */
@@ -44,14 +43,12 @@ Wayland_VideoInit(_THIS);
 static void
 Wayland_GetDisplayModes(_THIS, SDL_VideoDisplay *sdl_display);
 static int
-Wayland_SetDisplayMode(_THIS, SDL_VideoDisplay * display, SDL_DisplayMode * mode);
+Wayland_SetDisplayMode(_THIS, SDL_VideoDisplay *display, SDL_DisplayMode *mode);
 
 static void
 Wayland_VideoQuit(_THIS);
 
-
 /* Wayland driver bootstrap functions */
-
 static int
 Wayland_Available(void)
 {
@@ -64,7 +61,7 @@ Wayland_Available(void)
 }
 
 static void
-Wayland_DeleteDevice(SDL_VideoDevice * device)
+Wayland_DeleteDevice(SDL_VideoDevice *device)
 {
     SDL_free(device);
 }
@@ -101,7 +98,6 @@ Wayland_CreateDevice(int devindex)
     device->GL_UnloadLibrary = Wayland_GL_UnloadLibrary;
     device->GL_GetProcAddress = Wayland_GL_GetProcAddress;
 
-
     device->CreateWindow = Wayland_CreateWindow;
     device->ShowWindow = Wayland_ShowWindow;
     device->DestroyWindow = Wayland_DestroyWindow;
@@ -135,11 +131,11 @@ display_handle_geometry(void *data,
 
 static void
 display_handle_mode(void *data,
-		    struct wl_output *wl_output,
-		    uint32_t flags,
-		    int width,
-		    int height,
-		    int refresh)
+                    struct wl_output *wl_output,
+                    uint32_t flags,
+                    int width,
+                    int height,
+                    int refresh)
 {
     SDL_WaylandData *d = data;
 
@@ -148,7 +144,6 @@ display_handle_mode(void *data,
         d->screen_allocation.height = height;
     }
 }
-
 
 static const struct wl_output_listener output_listener = {
     display_handle_geometry,
@@ -172,7 +167,6 @@ display_handle_global(struct wl_display *display, uint32_t id,
         d->shell = wl_display_bind(display, id, &wl_shell_interface);
     }
 }
-
 
 static int
 update_event_mask(uint32_t mask, void *data)
@@ -256,7 +250,7 @@ Wayland_GetDisplayModes(_THIS, SDL_VideoDisplay *sdl_display)
 }
 
 static int
-Wayland_SetDisplayMode(_THIS, SDL_VideoDisplay * display, SDL_DisplayMode * mode)
+Wayland_SetDisplayMode(_THIS, SDL_VideoDisplay *display, SDL_DisplayMode *mode)
 {
     return 0;
 }

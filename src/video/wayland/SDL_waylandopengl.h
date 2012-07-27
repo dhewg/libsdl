@@ -27,11 +27,11 @@
 
 #include "SDL_waylandwindow.h"
 
-extern void Wayland_GL_SwapWindow(_THIS, SDL_Window * window);
+extern void Wayland_GL_SwapWindow(_THIS, SDL_Window *window);
 extern int Wayland_GL_GetSwapInterval(_THIS);
 extern int Wayland_GL_SetSwapInterval(_THIS, int interval);
-extern int Wayland_GL_MakeCurrent(_THIS, SDL_Window * window, SDL_GLContext context);
-extern SDL_GLContext Wayland_GL_CreateContext(_THIS, SDL_Window * window);
+extern int Wayland_GL_MakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context);
+extern SDL_GLContext Wayland_GL_CreateContext(_THIS, SDL_Window *window);
 extern int Wayland_GL_LoadLibrary(_THIS, const char *path);
 extern void Wayland_GL_UnloadLibrary(_THIS);
 extern void *Wayland_GL_GetProcAddress(_THIS, const char *proc);

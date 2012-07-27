@@ -29,11 +29,10 @@
 
 #include "SDL_waylandvideo.h"
 
-typedef struct
-{
+typedef struct {
     SDL_Window *sdlwindow;
     SDL_WaylandData *waylandData;
-    struct wl_surface	*surface;
+    struct wl_surface *surface;
     struct wl_shell_surface *shell_surface;
     struct wl_egl_window *egl_window;
     EGLSurface esurf;
@@ -41,9 +40,9 @@ typedef struct
     struct SDL_WaylandInput *keyboard_device;
 } SDL_WaylandWindow;
 
-extern void Wayland_ShowWindow(_THIS, SDL_Window * window);
-extern int Wayland_CreateWindow(_THIS, SDL_Window * window);
-extern void Wayland_DestroyWindow(_THIS, SDL_Window * window);
+extern void Wayland_ShowWindow(_THIS, SDL_Window *window);
+extern int Wayland_CreateWindow(_THIS, SDL_Window *window);
+extern void Wayland_DestroyWindow(_THIS, SDL_Window *window);
 
 #endif /* _SDL_waylandwindow_h */
 
