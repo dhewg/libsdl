@@ -34,6 +34,8 @@
 #include <EGL/egl.h>
 #include <GL/gl.h>
 
+struct xkb_context;
+
 typedef struct {
     struct wl_display *display;
     struct wl_compositor *compositor;
@@ -48,15 +50,12 @@ typedef struct {
     EGLContext context;
     EGLConfig econf;
 
-    struct xkb_desc *xkb;
+    struct xkb_context *xkb_context;
 
     int event_fd;
     int event_mask;
 
     int schedule_write;
-
-    const SDL_Scancode *input_table;
-    int input_table_size;
 } SDL_WaylandData;
 
 static inline void

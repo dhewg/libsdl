@@ -28,8 +28,6 @@
 #include "SDL_waylandvideo.h"
 #include "SDL_waylandwindow.h"
 
-extern void Wayland_init_xkb(SDL_WaylandData *d);
-
 extern void Wayland_PumpEvents(_THIS);
 
 extern void Wayland_display_add_input(SDL_WaylandData *d, uint32_t id);

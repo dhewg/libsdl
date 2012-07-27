@@ -34,6 +34,8 @@
 #include "SDL_waylandwindow.h"
 #include "SDL_waylandopengl.h"
 
+#include <xkbcommon/xkbcommon.h>
+
 #define WAYLANDVID_DRIVER_NAME "wayland"
 
 /* Initialization/Query functions */
@@ -209,7 +211,11 @@ Wayland_VideoInit(_THIS)
 
     data->event_fd = wl_display_get_fd(data->display, update_event_mask, data);
 
-    Wayland_init_xkb(data);
+    data->xkb_context = xkb_context_new(0);
+    if (!data->xkb_context) {
+        SDL_SetError("Failed to create XKB context");
+        return 0;
+    }
 
     SDL_VideoDisplay display;
     SDL_DisplayMode mode;
@@ -259,6 +265,9 @@ Wayland_SetDisplayMode(_THIS, SDL_VideoDisplay *display, SDL_DisplayMode *mode)
 void
 Wayland_VideoQuit(_THIS)
 {
+    SDL_WaylandData *data = _this->driverdata;
+    xkb_context_unref(data->xkb_context);
+    data->xkb_context = NULL;
 }
 
 /* vi: set ts=4 sw=4 expandtab: */

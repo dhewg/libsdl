@@ -53,33 +53,6 @@ struct SDL_WaylandInput {
     int32_t x, y, sx, sy;
 };
 
-const char *option_xkb_layout = "de";
-const char *option_xkb_variant = "nodeadkeys";
-const char *option_xkb_options = "";
-
-void
-Wayland_init_xkb(SDL_WaylandData *d)
-{
-#if 0
-    struct xkb_rule_names names;
-
-    names.rules = "evdev";
-    names.model = "evdev";
-    names.layout = option_xkb_layout;
-    names.variant = option_xkb_variant;
-    names.options = option_xkb_options;
-
-    d->xkb = xkb_compile_keymap_from_rules(&names);
-    if (!d->xkb) {
-        SDL_SetError("failed to compile keymap\n");
-        exit(1);
-    }
-
-    d->input_table = xfree86_scancode_table2;
-    d->input_table_size = SDL_arraysize(xfree86_scancode_table2);
-#endif
-}
-
 void
 Wayland_PumpEvents(_THIS)
 {
