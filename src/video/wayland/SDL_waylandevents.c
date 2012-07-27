@@ -21,29 +21,24 @@
 */
 
 #include "SDL_config.h"
+
 #include "SDL_stdinc.h"
 #include "SDL_assert.h"
 
 #include "../../events/SDL_sysevents.h"
 #include "../../events/SDL_events_c.h"
+#include "../../events/scancodes_xfree86.h"
 
 #include "SDL_waylandvideo.h"
 #include "SDL_waylandevents_c.h"
 #include "SDL_waylandwindow.h"
 
-#include <xkbcommon/xkbcommon.h>
 #include <linux/input.h>
-
-#include "../../events/scancodes_xfree86.h"
-
-typedef uint32_t KeySym;
-#include "../x11/imKStoUCS.h"
-
-#include <errno.h>
-
 #include <sys/select.h>
 #include <sys/mman.h>
+#include <errno.h>
 #include <unistd.h>
+#include <xkbcommon/xkbcommon.h>
 
 struct SDL_WaylandInput {
     SDL_WaylandData *display;

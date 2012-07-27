@@ -22,18 +22,15 @@
 
 #include "SDL_config.h"
 
-#include <fcntl.h>
 #include "SDL_video.h"
 #include "SDL_mouse.h"
-#include "../SDL_sysvideo.h"
-#include "../SDL_pixels_c.h"
-#include "../../events/SDL_events_c.h"
 
 #include "SDL_waylandvideo.h"
 #include "SDL_waylandevents_c.h"
 #include "SDL_waylandwindow.h"
 #include "SDL_waylandopengl.h"
 
+#include <fcntl.h>
 #include <xkbcommon/xkbcommon.h>
 
 #define WAYLANDVID_DRIVER_NAME "wayland"

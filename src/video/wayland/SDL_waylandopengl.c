@@ -25,6 +25,7 @@
 #include "SDL_waylandopengl.h"
 #include "SDL_waylandwindow.h"
 #include "SDL_waylandevents_c.h"
+
 #include <dlfcn.h>
 
 void

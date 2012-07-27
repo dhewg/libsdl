@@ -23,6 +23,7 @@
 #include "SDL_config.h"
 
 #include "../SDL_sysvideo.h"
+
 #include "SDL_waylandwindow.h"
 #include "SDL_waylandvideo.h"
 

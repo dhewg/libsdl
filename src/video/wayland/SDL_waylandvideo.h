@@ -25,14 +25,10 @@
 #ifndef _SDL_waylandvideo_h
 #define _SDL_waylandvideo_h
 
-#include "SDL_scancode.h"
-#include "../SDL_sysvideo.h"
 #include <wayland-client.h>
-#include <wayland-client-protocol.h>
 #include <wayland-egl.h>
 
 #include <EGL/egl.h>
-#include <GL/gl.h>
 
 struct xkb_context;
 
