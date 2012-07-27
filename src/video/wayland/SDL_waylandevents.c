@@ -42,6 +42,8 @@ typedef uint32_t KeySym;
 #include <errno.h>
 
 #include <sys/select.h>
+#include <sys/mman.h>
+#include <unistd.h>
 
 struct SDL_WaylandInput {
     SDL_WaylandData *display;
@@ -51,6 +53,11 @@ struct SDL_WaylandInput {
     SDL_WaylandWindow *pointer_focus;
     SDL_WaylandWindow *keyboard_focus;
     uint32_t modifiers;
+
+    struct {
+        struct xkb_keymap *keymap;
+        struct xkb_state *state;
+    } xkb;
 };
 
 void
@@ -322,6 +329,44 @@ static void
 keyboard_handle_keymap(void *data, struct wl_keyboard *keyboard,
                        uint32_t format, int fd, uint32_t size)
 {
+    struct SDL_WaylandInput *input = data;
+    char *map_str;
+
+    if (!data) {
+        close(fd);
+        return;
+    }
+
+    if (format != WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1) {
+        close(fd);
+        return;
+    }
+
+    map_str = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, 0);
+    if (map_str == MAP_FAILED) {
+        close(fd);
+        return;
+    }
+
+    input->xkb.keymap = xkb_map_new_from_string(input->display->xkb_context,
+                                                map_str,
+                                                XKB_KEYMAP_FORMAT_TEXT_V1,
+                                                0);
+    munmap(map_str, size);
+    close(fd);
+
+    if (!input->xkb.keymap) {
+        fprintf(stderr, "failed to compile keymap\n");
+        return;
+    }
+
+    input->xkb.state = xkb_state_new(input->xkb.keymap);
+    if (!input->xkb.state) {
+        fprintf(stderr, "failed to create XKB state\n");
+        xkb_map_unref(input->xkb.keymap);
+        input->xkb.keymap = NULL;
+        return;
+    }
 }
 
 static void
