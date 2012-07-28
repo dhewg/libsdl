@@ -161,4 +161,16 @@ Wayland_GL_GetSwapInterval(_THIS)
     return 0;
 }
 
+void
+Wayland_GL_DeleteContext(_THIS, SDL_GLContext context)
+{
+    SDL_WaylandData *data = _this->driverdata;
+
+    eglMakeCurrent(data->edpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    eglTerminate(data->edpy);
+    eglReleaseThread();
+
+    wayland_schedule_write(data);
+}
+
 /* vi: set ts=4 sw=4 expandtab: */

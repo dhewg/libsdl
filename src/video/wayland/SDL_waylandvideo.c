@@ -89,6 +89,7 @@ Wayland_CreateDevice(int devindex)
     device->GL_LoadLibrary = Wayland_GL_LoadLibrary;
     device->GL_UnloadLibrary = Wayland_GL_UnloadLibrary;
     device->GL_GetProcAddress = Wayland_GL_GetProcAddress;
+    device->GL_DeleteContext = Wayland_GL_DeleteContext;
 
     device->CreateWindow = Wayland_CreateWindow;
     device->ShowWindow = Wayland_ShowWindow;

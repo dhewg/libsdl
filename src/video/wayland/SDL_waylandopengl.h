@@ -35,6 +35,7 @@ extern SDL_GLContext Wayland_GL_CreateContext(_THIS, SDL_Window *window);
 extern int Wayland_GL_LoadLibrary(_THIS, const char *path);
 extern void Wayland_GL_UnloadLibrary(_THIS);
 extern void *Wayland_GL_GetProcAddress(_THIS, const char *proc);
+extern void Wayland_GL_DeleteContext(_THIS, SDL_GLContext context);
 
 #endif /* _SDL_waylandopengl_h */
 
