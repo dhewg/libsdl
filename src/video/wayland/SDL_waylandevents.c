@@ -350,6 +350,9 @@ void Wayland_display_destroy_input(SDL_WaylandData *d)
 {
     struct SDL_WaylandInput *input = d->input;
 
+    if (!input)
+        return;
+
     wl_seat_destroy(input->seat);
 
     xkb_state_unref(input->xkb.state);

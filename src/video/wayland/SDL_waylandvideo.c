@@ -185,7 +185,7 @@ Wayland_VideoInit(_THIS)
     data = malloc(sizeof *data);
     if (data == NULL)
         return 0;
-    data->schedule_write = 0;
+    memset(data, 0, sizeof *data);
 
     _this->driverdata = data;
 
@@ -260,8 +260,10 @@ Wayland_VideoQuit(_THIS)
 
     Wayland_display_destroy_input(data);
 
-    xkb_context_unref(data->xkb_context);
-    data->xkb_context = NULL;
+    if (data->xkb_context) {
+        xkb_context_unref(data->xkb_context);
+        data->xkb_context = NULL;
+    }
 
     free(data);
     _this->driverdata = NULL;
