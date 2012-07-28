@@ -31,6 +31,7 @@
 #include <EGL/egl.h>
 
 struct xkb_context;
+struct SDL_WaylandInput;
 
 typedef struct {
     struct wl_display *display;
@@ -47,6 +48,7 @@ typedef struct {
     EGLConfig econf;
 
     struct xkb_context *xkb_context;
+    struct SDL_WaylandInput *input;
 
     int event_fd;
     int event_mask;

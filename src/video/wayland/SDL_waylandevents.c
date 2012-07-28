@@ -338,10 +338,28 @@ Wayland_display_add_input(SDL_WaylandData *d, uint32_t id)
     input->pointer_focus = NULL;
     input->keyboard_focus = NULL;
 
+    d->input = input;
+
     wl_seat_add_listener(input->seat, &seat_listener, input);
     wl_seat_set_user_data(input->seat, input);
 
     wayland_schedule_write(d);
+}
+
+void Wayland_display_destroy_input(SDL_WaylandData *d)
+{
+    struct SDL_WaylandInput *input = d->input;
+
+    wl_seat_destroy(input->seat);
+
+    xkb_state_unref(input->xkb.state);
+    input->xkb.state = NULL;
+
+    xkb_map_unref(input->xkb.keymap);
+    input->xkb.keymap = NULL;
+
+    free(input);
+    d->input = NULL;
 }
 
 /* vi: set ts=4 sw=4 expandtab: */

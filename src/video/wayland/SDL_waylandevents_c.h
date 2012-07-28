@@ -31,6 +31,7 @@
 extern void Wayland_PumpEvents(_THIS);
 
 extern void Wayland_display_add_input(SDL_WaylandData *d, uint32_t id);
+extern void Wayland_display_destroy_input(SDL_WaylandData *d);
 
 #endif /* _SDL_waylandevents_h */
 

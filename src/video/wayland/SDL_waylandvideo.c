@@ -256,8 +256,14 @@ void
 Wayland_VideoQuit(_THIS)
 {
     SDL_WaylandData *data = _this->driverdata;
+
+    Wayland_display_destroy_input(data);
+
     xkb_context_unref(data->xkb_context);
     data->xkb_context = NULL;
+
+    free(data);
+    _this->driverdata = NULL;
 }
 
 /* vi: set ts=4 sw=4 expandtab: */
