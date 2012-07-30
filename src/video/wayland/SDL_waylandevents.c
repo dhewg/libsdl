@@ -243,6 +243,7 @@ keyboard_handle_key(void *data, struct wl_keyboard *keyboard,
     const xkb_keysym_t *syms;
     uint32_t scancode;
     char text[8];
+    int size;
 
     if (key < SDL_arraysize(xfree86_scancode_table2)) {
         scancode = xfree86_scancode_table2[key];
@@ -261,7 +262,7 @@ keyboard_handle_key(void *data, struct wl_keyboard *keyboard,
         return;
 
     if (state) {
-        int size = xkb_keysym_to_utf8(syms[0], text, sizeof text);
+        size = xkb_keysym_to_utf8(syms[0], text, sizeof text);
 
         if (size > 0) {
             text[size] = 0;
