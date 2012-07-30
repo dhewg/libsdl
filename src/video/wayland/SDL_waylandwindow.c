@@ -130,7 +130,12 @@ void Wayland_DestroyWindow(_THIS, SDL_Window *window)
     if (data) {
         eglDestroySurface(data->edpy, wind->esurf);
         wl_egl_window_destroy(wind->egl_window);
+
+        if (wind->shell_surface)
+            wl_shell_surface_destroy(wind->shell_surface);
+
         wl_surface_destroy(wind->surface);
+
         SDL_free(wind);
         wayland_schedule_write(data);
     }
