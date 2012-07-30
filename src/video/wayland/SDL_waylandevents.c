@@ -158,6 +158,25 @@ static void
 pointer_handle_axis(void *data, struct wl_pointer *pointer,
                     uint32_t time, uint32_t axis, wl_fixed_t value)
 {
+    struct SDL_WaylandInput *input = data;
+    SDL_WaylandWindow *window = input->pointer_focus;
+    enum wl_pointer_axis a = axis;
+    int x, y;
+
+    switch (a) {
+    case WL_POINTER_AXIS_VERTICAL_SCROLL:
+        x = 0;
+        y = wl_fixed_to_int(value);
+        break;
+    case WL_POINTER_AXIS_HORIZONTAL_SCROLL:
+        x = wl_fixed_to_int(value);
+        y = 0;
+        break;
+    default:
+        return;
+    }
+
+    SDL_SendMouseWheel(window->sdlwindow, x, y);
 }
 
 static const struct wl_pointer_listener pointer_listener = {
