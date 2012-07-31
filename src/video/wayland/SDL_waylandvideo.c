@@ -258,12 +258,24 @@ Wayland_VideoQuit(_THIS)
 {
     SDL_WaylandData *data = _this->driverdata;
 
+    if (data->output);
+        wl_output_destroy(data->output);
+
     Wayland_display_destroy_input(data);
 
     if (data->xkb_context) {
         xkb_context_unref(data->xkb_context);
         data->xkb_context = NULL;
     }
+
+    if (data->shell)
+        wl_shell_destroy(data->shell);
+
+    if (data->compositor)
+        wl_compositor_destroy(data->compositor);
+
+    wl_display_flush(data->display);
+	wl_display_disconnect(data->display);
 
     free(data);
     _this->driverdata = NULL;
