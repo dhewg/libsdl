@@ -369,13 +369,20 @@ void Wayland_display_destroy_input(SDL_WaylandData *d)
     if (!input)
         return;
 
-    wl_seat_destroy(input->seat);
+    if (input->keyboard)
+        wl_keyboard_destroy(input->keyboard);
 
-    xkb_state_unref(input->xkb.state);
-    input->xkb.state = NULL;
+    if (input->pointer)
+        wl_pointer_destroy(input->pointer);
 
-    xkb_map_unref(input->xkb.keymap);
-    input->xkb.keymap = NULL;
+    if (input->seat)
+        wl_seat_destroy(input->seat);
+
+    if (input->xkb.state)
+        xkb_state_unref(input->xkb.state);
+
+    if (input->xkb.keymap)
+        xkb_map_unref(input->xkb.keymap);
 
     free(input);
     d->input = NULL;
